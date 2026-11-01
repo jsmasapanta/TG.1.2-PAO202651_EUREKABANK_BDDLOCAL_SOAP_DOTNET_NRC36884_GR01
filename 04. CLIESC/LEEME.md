@@ -7,4 +7,4 @@
 - `modelo/` Empleado, Cuenta, Movimiento, ErrorServicio (solo get/set) y TipoOperacion. Sin reglas del banco: las valida el servidor.
 - `Recursos/monster.jpg` (recurso incrustado).
 
-La URL del servidor está en `App.config`.
+Servidor en `App.config` (`SoapHost`, `SoapPuerto` = 8087, `SoapRuta`) o variables `SOAP_HOST` / `SOAP_PORT`, igual que la consola. Envía `X-Cliente: ESCRITORIO` y el token en el header SOAP; "Cerrar sesión" llama a `cerrarSesion`.

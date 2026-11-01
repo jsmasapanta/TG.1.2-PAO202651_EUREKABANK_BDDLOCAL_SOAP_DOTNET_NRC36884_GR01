@@ -64,9 +64,10 @@ namespace ec.edu.monster.vista
             var btnSalir = Tema.Boton("Cerrar sesión", Color.FromArgb(160, 50, 40));
             btnSalir.Location = new Point(25, 520);
             btnSalir.Width = 180;
-            btnSalir.Click += (s, e) =>
+            btnSalir.Click += async (s, e) =>
             {
-                _controlador.CerrarSesion();
+                btnSalir.Enabled = false;
+                await _controlador.CerrarSesionAsync();
                 DialogResult = DialogResult.Retry;
                 Close();
             };

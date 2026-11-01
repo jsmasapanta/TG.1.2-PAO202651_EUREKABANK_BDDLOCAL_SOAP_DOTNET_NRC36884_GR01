@@ -36,8 +36,8 @@ public class BancoController : Controller
 
         try
         {
-            modelo.Datos = await _cliente.ConsultarCuentaAsync(modelo.Cuenta!);
-            modelo.Movimientos = await _cliente.TraerMovimientosAsync(modelo.Cuenta!);
+            modelo.Datos = await _cliente.ConsultarCuentaAsync(Token, modelo.Cuenta!);
+            modelo.Movimientos = await _cliente.TraerMovimientosAsync(Token, modelo.Cuenta!);
         }
         catch (ErrorServicioException ex)
         {
@@ -87,9 +87,9 @@ public class BancoController : Controller
         {
             decimal saldo = modelo.Tipo switch
             {
-                TipoOperacion.Deposito => await _cliente.RegistrarDepositoAsync(cuenta, importe, empleado),
-                TipoOperacion.Retiro => await _cliente.RegistrarRetiroAsync(cuenta, importe, empleado),
-                _ => await _cliente.RegistrarTransferenciaAsync(cuenta, modelo.CuentaDestino ?? "", importe, empleado)
+                TipoOperacion.Deposito => await _cliente.RegistrarDepositoAsync(Token, cuenta, importe, empleado),
+                TipoOperacion.Retiro => await _cliente.RegistrarRetiroAsync(Token, cuenta, importe, empleado),
+                _ => await _cliente.RegistrarTransferenciaAsync(Token, cuenta, modelo.CuentaDestino ?? "", importe, empleado)
             };
 
             modelo.Exito = $"{titulo} registrad{(esTransferencia ? "a" : "o")}";
@@ -110,6 +110,9 @@ public class BancoController : Controller
         }
         return View("Operacion", modelo);
     }
+
+    /// <summary>Token de la sesión (lo pone AccesoController al iniciar sesión).</summary>
+    private string Token => HttpContext.Session.GetString(RequiereSesionAttribute.ClaveToken) ?? "";
 
     /// <summary>Convierte lo escrito (punto o coma decimal) al decimal que recibe el servicio.</summary>
     private static bool LeerImporte(string? texto, out decimal importe) =>

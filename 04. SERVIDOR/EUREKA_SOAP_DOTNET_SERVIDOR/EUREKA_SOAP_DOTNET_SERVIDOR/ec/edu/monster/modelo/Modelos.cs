@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace ec.edu.monster.modelo
@@ -25,6 +26,8 @@ namespace ec.edu.monster.modelo
         [DataMember(Order = 1)] public string Codigo { get; set; }
         [DataMember(Order = 2)] public string Usuario { get; set; }
         [DataMember(Order = 3)] public string Nombre { get; set; }
+        /// <summary>Token de la sesión: los clientes lo envían en el header SOAP &lt;Token&gt; de las demás operaciones.</summary>
+        [DataMember(Order = 4)] public string Token { get; set; }
     }
 
     /// <summary>Datos de una cuenta con su cliente, moneda y sucursal (tablas Cuenta, Cliente, Moneda, Sucursal).</summary>
@@ -71,5 +74,39 @@ namespace ec.edu.monster.modelo
             Codigo = codigo;
             Mensaje = mensaje;
         }
+    }
+
+    /// <summary>Respuesta de obtenerEstado: métricas del monitor (sin claves, tokens ni montos) y sesiones vigentes.</summary>
+    [DataContract(Namespace = Constantes.NamespaceServicio)]
+    public class EstadoServidor
+    {
+        [DataMember(Order = 1)] public DateTime Inicio { get; set; }
+        [DataMember(Order = 2)] public long SegundosActivo { get; set; }
+        [DataMember(Order = 3)] public long TotalPeticiones { get; set; }
+        [DataMember(Order = 4)] public long TotalExitosas { get; set; }
+        [DataMember(Order = 5)] public int SesionesActivas { get; set; }
+        /// <summary>WEB, MOVIL, ESCRITORIO, CONSOLA, PANEL, OTRO.</summary>
+        [DataMember(Order = 6)] public List<Conteo> PorCliente { get; set; }
+        /// <summary>Deposito, Retiro, Transferencia, Consulta, Movimientos.</summary>
+        [DataMember(Order = 7)] public List<Conteo> PorOperacion { get; set; }
+        /// <summary>Últimos 60 eventos, el más reciente primero.</summary>
+        [DataMember(Order = 8)] public List<EventoMonitor> Eventos { get; set; }
+    }
+
+    [DataContract(Namespace = Constantes.NamespaceServicio)]
+    public class Conteo
+    {
+        [DataMember(Order = 1)] public string Nombre { get; set; }
+        [DataMember(Order = 2)] public int Cantidad { get; set; }
+    }
+
+    /// <summary>Una petición atendida: hora, cliente (X-Cliente), operación y si salió bien.</summary>
+    [DataContract(Namespace = Constantes.NamespaceServicio)]
+    public class EventoMonitor
+    {
+        [DataMember(Order = 1)] public DateTime Hora { get; set; }
+        [DataMember(Order = 2)] public string Cliente { get; set; }
+        [DataMember(Order = 3)] public string Operacion { get; set; }
+        [DataMember(Order = 4)] public bool Exito { get; set; }
     }
 }

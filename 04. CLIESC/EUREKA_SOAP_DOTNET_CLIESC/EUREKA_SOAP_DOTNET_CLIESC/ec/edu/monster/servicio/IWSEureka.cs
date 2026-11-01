@@ -14,6 +14,10 @@ namespace ec.edu.monster.servicio
         [FaultContract(typeof(ErrorServicio))]
         Empleado Login(string usuario, string clave);
 
+        [OperationContract(Name = "cerrarSesion")]
+        [FaultContract(typeof(ErrorServicio))]
+        bool CerrarSesion(string token);
+
         [OperationContract(Name = "consultarCuenta")]
         [FaultContract(typeof(ErrorServicio))]
         Cuenta ConsultarCuenta(string cuenta);

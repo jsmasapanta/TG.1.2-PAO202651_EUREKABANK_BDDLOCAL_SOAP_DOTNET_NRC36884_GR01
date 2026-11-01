@@ -46,7 +46,7 @@ public partial class MenuPage : ContentPage
     {
         if (await DisplayAlert("Cerrar sesión", "¿Desea salir de EurekaBank?", "Sí", "No"))
         {
-            _controlador.CerrarSesion();
+            await _controlador.CerrarSesionAsync();
             Window.Page = new LoginPage();
         }
     }

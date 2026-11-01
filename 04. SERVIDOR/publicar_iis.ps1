@@ -40,12 +40,14 @@ foreach ($c in $caracteristicas) {
     }
 }
 
-# 2. Copiar solo lo necesario para ejecutar: .svc (WCF), .asmx, Web.config y bin\
+# 2. Copiar solo lo necesario para ejecutar: .svc (WCF), .asmx, Web.config, el panel y bin\
 Paso "2/5  Copiando el servidor a $Destino..."
 New-Item -ItemType Directory -Force -Path $Destino, "$Destino\bin" | Out-Null
 Copy-Item (Join-Path $Proyecto 'WSEureka.svc') $Destino -Force
 Copy-Item (Join-Path $Proyecto 'WSEureka.asmx') $Destino -Force
 Copy-Item (Join-Path $Proyecto 'Web.config') $Destino -Force
+# Panel de monitoreo en la raíz del sitio (http://IP:8087/)
+foreach ($f in 'index.html','panel.js','panel.css','monster.jpg') { Copy-Item (Join-Path $Proyecto $f) $Destino -Force }
 Copy-Item (Join-Path $Proyecto 'bin\*') "$Destino\bin" -Recurse -Force
 
 # 3. Grupo de aplicaciones (.NET CLR v4.0) y sitio en el puerto 8087
@@ -78,4 +80,4 @@ try {
 }
 
 Write-Host "`nListo. Los demás integrantes usan una de estas URL (la del adaptador Wi-Fi):" -ForegroundColor Green
-foreach ($ip in $ips) { Write-Host ("   {0,-12} http://{1}:{2}/WSEureka.svc   (página ASMX: /WSEureka.asmx)" -f $ip.InterfaceAlias, $ip.IPAddress, $Puerto) }
+foreach ($ip in $ips) { Write-Host ("   {0,-12} http://{1}:{2}/WSEureka.svc   (panel: http://{1}:{2}/ · ASMX: /WSEureka.asmx)" -f $ip.InterfaceAlias, $ip.IPAddress, $Puerto) }

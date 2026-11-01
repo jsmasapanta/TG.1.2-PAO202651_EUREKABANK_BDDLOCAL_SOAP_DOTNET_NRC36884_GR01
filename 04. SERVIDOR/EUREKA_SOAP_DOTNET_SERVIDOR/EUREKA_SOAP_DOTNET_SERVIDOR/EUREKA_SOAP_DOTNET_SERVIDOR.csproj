@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -52,12 +52,19 @@
   <ItemGroup>
     <Content Include="WSEureka.svc" />
     <Content Include="WSEureka.asmx" />
+    <Content Include="index.html" />
+    <Content Include="panel.js" />
+    <Content Include="panel.css" />
+    <Content Include="monster.jpg" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ec\edu\monster\db\ConexionBD.cs" />
     <Compile Include="ec\edu\monster\modelo\Modelos.cs" />
     <Compile Include="ec\edu\monster\servicio\EurekaServicio.cs" />
+    <Compile Include="ec\edu\monster\servicio\GestorSesiones.cs" />
+    <Compile Include="ec\edu\monster\servicio\MonitorServidor.cs" />
+    <Compile Include="ec\edu\monster\ws\ContextoPeticion.cs" />
     <Compile Include="ec\edu\monster\ws\IWSEureka.cs" />
     <Compile Include="ec\edu\monster\ws\WSEureka.svc.cs">
       <DependentUpon>WSEureka.svc</DependentUpon>

@@ -14,8 +14,9 @@ public class ErrorServicioException : Exception
 }
 
 /// <summary>
-/// Llama a las operaciones del servicio SOAP con HttpClient: arma el sobre, lo envía por POST con la
-/// cabecera SOAPAction y copia la respuesta en los modelos (get/set). Si llega un SOAP Fault, entrega el
+/// Llama a las operaciones del servicio SOAP con HttpClient: arma el sobre (valores escapados con
+/// SecurityElement.Escape y el token en &lt;soap:Header&gt;), lo envía por POST con SOAPAction y el header
+/// X-Cliente, y copia la respuesta en los modelos (get/set). Si llega un SOAP Fault, entrega el
 /// &lt;Mensaje&gt; de ErrorServicio. No tiene reglas del banco: todas las valida el servidor.
 /// Patrón Singleton: toda la app usa ClienteSoap.Instancia (un solo HttpClient).
 /// </summary>
@@ -23,10 +24,10 @@ public sealed class ClienteSoap
 {
     public const string Namespace = "http://espe.edu.ec/eureka/";
     private const string Contrato = "WSEureka";
-    private const string ClavePreferencia = "url_servidor_eureka";
 
-    // IP de la PC con IIS en la red WiFi; en el emulador sería http://10.0.2.2:8087/WSEureka.svc.
-    public const string UrlPorDefecto = "http://192.168.100.3:8087/WSEureka.svc";
+    /// <summary>MOVIL en Android; ESCRITORIO si la app corre en Windows.</summary>
+    public static readonly string NombreCliente =
+        DeviceInfo.Current.Platform == DevicePlatform.WinUI ? "ESCRITORIO" : "MOVIL";
 
     private static readonly Lazy<ClienteSoap> _instancia = new(() => new ClienteSoap());
 
@@ -34,28 +35,53 @@ public sealed class ClienteSoap
 
     private readonly HttpClient _http;
 
+    /// <summary>Token de la sesión; nunca se muestra en pantalla.</summary>
+    private string? _token;
+
     // Constructor privado: solo la propia clase crea la instancia.
     private ClienteSoap()
     {
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
     }
 
-    /// <summary>URL del servicio; se guarda en el teléfono para no escribirla cada vez.</summary>
-    public string Url
-    {
-        get => Preferences.Default.Get(ClavePreferencia, UrlPorDefecto);
-        set => Preferences.Default.Set(ClavePreferencia, value.Trim());
-    }
+    /// <summary>
+    /// URL del servicio. Arranca con la de appsettings.json (incrustado en la app); en la pantalla de login
+    /// se puede cambiar solo para esta ejecución (por ejemplo a http://localhost:8087/... con adb reverse).
+    /// </summary>
+    public string Url { get; set; } = ConfiguracionServidor.Url;
 
     public async Task<Empleado> LoginAsync(string usuario, string clave)
     {
+        _token = null;
         XElement r = await InvocarAsync("login", ("usuario", usuario), ("clave", clave));
-        return new Empleado
+        var empleado = new Empleado
         {
             Codigo = Texto(r, "Codigo"),
             Usuario = Texto(r, "Usuario"),
-            Nombre = Texto(r, "Nombre")
+            Nombre = Texto(r, "Nombre"),
+            Token = Texto(r, "Token")
         };
+        _token = empleado.Token;
+        return empleado;
+    }
+
+    /// <summary>Invalida el token en el servidor. Si no se puede avisar, igual se olvida aquí.</summary>
+    public async Task CerrarSesionAsync()
+    {
+        string? token = _token;
+        _token = null;
+        if (string.IsNullOrEmpty(token))
+        {
+            return;
+        }
+        try
+        {
+            await InvocarAsync("cerrarSesion", ("token", token));
+        }
+        catch (ErrorServicioException)
+        {
+            // El token vence solo a los 30 minutos.
+        }
     }
 
     public async Task<Cuenta> ConsultarCuentaAsync(string cuenta)
@@ -105,16 +131,21 @@ public sealed class ClienteSoap
     private async Task<XElement> InvocarAsync(string operacion, params (string Nombre, string Valor)[] parametros)
     {
         string url = Url;
-        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? destino))
+        if (string.IsNullOrWhiteSpace(url) && ConfiguracionServidor.Error != null)
+        {
+            throw new ErrorServicioException(ConfiguracionServidor.Error);
+        }
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? destino) || (destino.Scheme != Uri.UriSchemeHttp && destino.Scheme != Uri.UriSchemeHttps))
         {
             throw new ErrorServicioException($"La URL del servidor no es válida: {url}");
         }
 
         var peticion = new HttpRequestMessage(HttpMethod.Post, destino)
         {
-            Content = new StringContent(ConstruirSobre(operacion, parametros), Encoding.UTF8, "text/xml")
+            Content = new StringContent(ConstruirSobre(operacion, parametros, _token), Encoding.UTF8, "text/xml")
         };
         peticion.Headers.Add("SOAPAction", $"\"{Namespace}{Contrato}/{operacion}\"");
+        peticion.Headers.Add("X-Cliente", NombreCliente);
 
         try
         {
@@ -132,12 +163,11 @@ public sealed class ClienteSoap
         }
         catch (Exception e) when (e is HttpRequestException || e is SocketException || e is IOException)
         {
-            throw new ErrorServicioException(
-                $"No se pudo conectar con el servidor en {url}. Verifique que esté encendido, la IP y que estén en la misma red WiFi.");
+            throw new ErrorServicioException($"No se pudo conectar a {url}. Verifica IP, puerto y red.");
         }
     }
 
-    private static string ConstruirSobre(string operacion, (string Nombre, string Valor)[] parametros)
+    private static string ConstruirSobre(string operacion, (string Nombre, string Valor)[] parametros, string? token)
     {
         var cuerpo = new StringBuilder();
         foreach (var (nombre, valor) in parametros)
@@ -146,6 +176,7 @@ public sealed class ClienteSoap
         }
         return "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
             + "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+            + (string.IsNullOrEmpty(token) ? "" : $"<s:Header><Token xmlns=\"{Namespace}\">{SecurityElement.Escape(token)}</Token></s:Header>")
             + $"<s:Body><{operacion} xmlns=\"{Namespace}\">{cuerpo}</{operacion}></s:Body>"
             + "</s:Envelope>";
     }

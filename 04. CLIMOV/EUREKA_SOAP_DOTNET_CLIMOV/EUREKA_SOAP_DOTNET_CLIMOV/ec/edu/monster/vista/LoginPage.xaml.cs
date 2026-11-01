@@ -4,8 +4,8 @@ using ec.edu.monster.servicio;
 namespace ec.edu.monster.vista;
 
 /// <summary>
-/// Pantalla de inicio de sesión y configuración de la URL del servidor. Los 3 intentos y el bloqueo
-/// los controla el servidor: aquí solo se muestra su mensaje.
+/// Pantalla de inicio de sesión. La URL del servidor viene de appsettings.json (incrustado); aquí se puede
+/// cambiar solo para esta ejecución. Los 3 intentos y el bloqueo los controla el servidor: aquí solo se muestra su mensaje.
 /// </summary>
 public partial class LoginPage : ContentPage
 {
@@ -15,6 +15,10 @@ public partial class LoginPage : ContentPage
     {
         InitializeComponent();
         TxtUrl.Text = _controlador.UrlServidor;
+        if (ConfiguracionServidor.Error != null)
+        {
+            MostrarError(ConfiguracionServidor.Error);
+        }
     }
 
     private async void OnIngresarClicked(object? sender, EventArgs e)

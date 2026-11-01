@@ -34,6 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
@@ -46,6 +47,7 @@
     <Compile Include="ec\edu\monster\modelo\Movimiento.cs" />
     <Compile Include="ec\edu\monster\modelo\TipoOperacion.cs" />
     <Compile Include="ec\edu\monster\servicio\ClienteEureka.cs" />
+    <Compile Include="ec\edu\monster\servicio\ConfiguracionServidor.cs" />
     <Compile Include="ec\edu\monster\servicio\IWSEureka.cs" />
     <Compile Include="ec\edu\monster\vista\VistaConsola.cs" />
     <Compile Include="Program.cs" />

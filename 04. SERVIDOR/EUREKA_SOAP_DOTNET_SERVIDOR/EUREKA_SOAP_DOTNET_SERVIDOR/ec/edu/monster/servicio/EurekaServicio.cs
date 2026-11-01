@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -9,10 +9,18 @@ using ec.edu.monster.modelo;
 
 namespace ec.edu.monster.servicio
 {
-    /// <summary>Regla del banco que no se cumple (saldo insuficiente, cuenta cancelada...). El mensaje va al usuario.</summary>
+    /// <summary>
+    /// Regla del banco que no se cumple (saldo insuficiente, cuenta cancelada, credenciales...). El mensaje va al usuario
+    /// y el código viaja en ErrorServicio.Codigo para que el cliente sepa qué pasó.
+    /// </summary>
     public class ReglaNegocioException : Exception
     {
-        public ReglaNegocioException(string mensaje) : base(mensaje) { }
+        public ReglaNegocioException(string mensaje, string codigo = "REGLA_NEGOCIO") : base(mensaje)
+        {
+            Codigo = codigo;
+        }
+
+        public string Codigo { get; }
     }
 
     /// <summary>
@@ -68,7 +76,8 @@ namespace ec.edu.monster.servicio
                 {
                     int segundos = (int)Math.Ceiling((control.BloqueadoHasta.Value - DateTime.Now).TotalSeconds);
                     throw new ReglaNegocioException(
-                        "Usuario bloqueado por superar " + IntentosMaximos + " intentos. Intente de nuevo en " + segundos + " segundos.");
+                        "Cuenta bloqueada por superar " + IntentosMaximos + " intentos. Intentos restantes: 0. Intente de nuevo en " + segundos + " segundos.",
+                        "USUARIO_BLOQUEADO");
                 }
             }
 
@@ -79,6 +88,8 @@ namespace ec.edu.monster.servicio
                 if (empleado != null)
                 {
                     _intentos.Remove(llave);
+                    // El token va en el header SOAP <Token> de las demás operaciones (dura 30 minutos).
+                    empleado.Token = GestorSesiones.Instancia.Crear();
                     return empleado;
                 }
 
@@ -92,10 +103,12 @@ namespace ec.edu.monster.servicio
                 {
                     control.BloqueadoHasta = DateTime.Now.Add(TiempoBloqueo);
                     throw new ReglaNegocioException(
-                        "Se superaron los " + IntentosMaximos + " intentos. El usuario queda bloqueado " + TiempoBloqueo.TotalMinutes + " minutos.");
+                        "Cuenta bloqueada: se superaron los " + IntentosMaximos + " intentos. Intentos restantes: 0. Espere " + TiempoBloqueo.TotalMinutes + " minutos.",
+                        "USUARIO_BLOQUEADO");
                 }
                 throw new ReglaNegocioException(
-                    "Usuario o clave incorrectos. Intentos restantes: " + (IntentosMaximos - control.Fallidos) + ".");
+                    "Credenciales inválidas. Intentos restantes: " + (IntentosMaximos - control.Fallidos) + ".",
+                    "CREDENCIALES_INVALIDAS");
             }
         }
 

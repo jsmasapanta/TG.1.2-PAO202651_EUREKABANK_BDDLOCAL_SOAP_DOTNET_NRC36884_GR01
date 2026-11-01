@@ -5,7 +5,7 @@ DBMS           :  SQL Server
 Base de Datos  :  EUREKABANK
 Script         :  01 - Crea la Base de Datos (tablas, claves y restricciones)
 Modelo original:  Ing. Eric Gustavo Coronel Castillo (www.desarrollasoftware.com)
-Proyecto       :  TG1.2 SOAP .NET con BDD - ESPE Arquitectura de Software - GR01
+Proyecto       :  TG.1.2 SOAP .NET con BDD - ESPE Arquitectura de Software - GR01
 */
 
 -- =============================================

@@ -23,7 +23,12 @@ namespace ec.edu.monster.controlador
             return Empleado;
         }
 
-        public void CerrarSesion() => Empleado = null;
+        /// <summary>Avisa al servidor (en segundo plano) para que invalide el token.</summary>
+        public async Task CerrarSesionAsync()
+        {
+            await Task.Run(() => _servicio.CerrarSesion());
+            Empleado = null;
+        }
 
         public Task<Cuenta> ConsultarCuentaAsync(string cuenta) =>
             Task.Run(() => _servicio.ConsultarCuenta(cuenta));

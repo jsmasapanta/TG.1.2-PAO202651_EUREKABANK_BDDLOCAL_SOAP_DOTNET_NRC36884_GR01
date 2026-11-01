@@ -44,8 +44,10 @@ public sealed class ControladorEureka
         return Empleado;
     }
 
-    public void CerrarSesion()
+    /// <summary>Avisa al servidor para que invalide el token.</summary>
+    public async Task CerrarSesionAsync()
     {
+        await _cliente.CerrarSesionAsync();
         Empleado = null;
         _operacionesSesion.Clear();
     }

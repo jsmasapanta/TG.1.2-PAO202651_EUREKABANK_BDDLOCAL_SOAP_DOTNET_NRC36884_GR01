@@ -51,7 +51,7 @@
                     <Label Text="Servidor SOAP" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
                     <Entry x:Name="TxtUrl" Keyboard="Url" FontSize="14" />
                     <Label FontSize="12" TextColor="{StaticResource TextoSuave}"
-                           Text="Celular real: http://IP-DE-LA-PC:8087/WSEureka.svc (misma red WiFi). Emulador: http://10.0.2.2:8087/WSEureka.svc" />
+                           Text="Viene de appsettings.json (se recompila al cambiar la IP). Celular real: http://IP-DE-LA-PC:8087/WSEureka.svc (misma red WiFi). Emulador: http://10.0.2.2:8087/WSEureka.svc" />
                 </VerticalStackLayout>
             </Border>
 

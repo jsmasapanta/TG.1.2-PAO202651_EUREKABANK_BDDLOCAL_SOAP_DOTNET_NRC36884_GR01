@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ServiceModel;
 using ec.edu.monster.modelo;
 
@@ -8,6 +8,8 @@ namespace ec.edu.monster.ws
     /// Contrato SOAP de EurekaBank. Los importes y saldos viajan como xs:decimal.
     /// Si algo falla (cuenta inexistente, saldo insuficiente, base de datos caída...)
     /// la operación responde un SOAP Fault con ErrorServicio (Codigo, Mensaje).
+    /// login devuelve un token; consultarCuenta, traerMovimientos y registrar* lo exigen en el
+    /// header SOAP &lt;Token xmlns="http://espe.edu.ec/eureka/"&gt;. obtenerEstado no pide login.
     /// </summary>
     [ServiceContract(Name = "WSEureka", Namespace = Constantes.NamespaceServicio)]
     public interface IWSEureka
@@ -16,6 +18,15 @@ namespace ec.edu.monster.ws
         [OperationContract(Name = "login")]
         [FaultContract(typeof(ErrorServicio))]
         Empleado Login(string usuario, string clave);
+
+        /// <summary>Invalida el token de la sesión. Devuelve false si ya no existía.</summary>
+        [OperationContract(Name = "cerrarSesion")]
+        [FaultContract(typeof(ErrorServicio))]
+        bool CerrarSesion(string token);
+
+        /// <summary>Métricas del monitor para el panel. No pide login ni cuenta como petición.</summary>
+        [OperationContract(Name = "obtenerEstado")]
+        EstadoServidor ObtenerEstado();
 
         [OperationContract(Name = "consultarCuenta")]
         [FaultContract(typeof(ErrorServicio))]

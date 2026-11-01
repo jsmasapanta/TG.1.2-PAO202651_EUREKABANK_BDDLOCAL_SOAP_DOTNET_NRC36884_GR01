@@ -9,7 +9,8 @@ namespace ec.edu.monster.controlador
     /// </summary>
     public class ControladorConsola
     {
-        private readonly ClienteEureka _servicio = ClienteEureka.Instancia;
+        // Se pide al usarlo: si App.config tiene un host o puerto inválido, el error se muestra en la vista.
+        private ClienteEureka _servicio => ClienteEureka.Instancia;
 
         public string UrlServidor => _servicio.UrlServidor;
 
@@ -21,7 +22,12 @@ namespace ec.edu.monster.controlador
             return Empleado;
         }
 
-        public void CerrarSesion() => Empleado = null;
+        /// <summary>Avisa al servidor para que invalide el token.</summary>
+        public void CerrarSesion()
+        {
+            _servicio.CerrarSesion();
+            Empleado = null;
+        }
 
         public Cuenta ConsultarCuenta(string cuenta) => _servicio.ConsultarCuenta(cuenta);
 

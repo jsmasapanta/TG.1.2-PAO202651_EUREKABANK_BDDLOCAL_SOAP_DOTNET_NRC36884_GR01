@@ -40,6 +40,7 @@ public class AccesoController : Controller
             Empleado empleado = await _servicio.LoginAsync(entrada.Usuario ?? "", entrada.Clave ?? "");
             HttpContext.Session.SetString(RequiereSesionAttribute.ClaveEmpleado, empleado.Codigo);
             HttpContext.Session.SetString(RequiereSesionAttribute.ClaveNombre, empleado.Nombre);
+            HttpContext.Session.SetString(RequiereSesionAttribute.ClaveToken, empleado.Token);
             return RedirectToAction("Movimientos", "Banco");
         }
         catch (ErrorServicioException ex)
@@ -50,9 +51,21 @@ public class AccesoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        string? token = HttpContext.Session.GetString(RequiereSesionAttribute.ClaveToken);
         HttpContext.Session.Clear();
+        if (!string.IsNullOrEmpty(token))
+        {
+            try
+            {
+                await _servicio.CerrarSesionAsync(token);
+            }
+            catch (ErrorServicioException)
+            {
+                // Si el servidor no responde, el token vence solo a los 30 minutos.
+            }
+        }
         return RedirectToAction(nameof(Login));
     }
 }

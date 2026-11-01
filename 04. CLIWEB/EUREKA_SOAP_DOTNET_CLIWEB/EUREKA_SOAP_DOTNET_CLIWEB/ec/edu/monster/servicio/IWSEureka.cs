@@ -14,6 +14,10 @@ public interface IWSEureka
     [FaultContract(typeof(ErrorServicio))]
     Task<Empleado> LoginAsync(string usuario, string clave);
 
+    [OperationContract(Name = "cerrarSesion")]
+    [FaultContract(typeof(ErrorServicio))]
+    Task<bool> CerrarSesionAsync(string token);
+
     [OperationContract(Name = "consultarCuenta")]
     [FaultContract(typeof(ErrorServicio))]
     Task<Cuenta> ConsultarCuentaAsync(string cuenta);

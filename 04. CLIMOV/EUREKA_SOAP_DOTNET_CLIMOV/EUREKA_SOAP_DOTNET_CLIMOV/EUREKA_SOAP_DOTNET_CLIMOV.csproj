@@ -42,6 +42,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Dirección del servidor (Host, Puerto, Ruta). Va dentro de la app: al cambiar la IP hay que recompilar. -->
+		<EmbeddedResource Include="appsettings.json" LogicalName="appsettings.json" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.5" />
 	</ItemGroup>

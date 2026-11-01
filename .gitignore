@@ -23,3 +23,7 @@ Thumbs.db
 
 # Iniciar-RedLocal.ps1
 .redlocal.pid
+
+# Respaldos de PowerDesigner
+*.oob
+*.ebb

@@ -12,13 +12,13 @@
             <Border Padding="16" BackgroundColor="{DynamicResource Tarjeta}" StrokeThickness="0" StrokeShape="RoundRectangle 14">
                 <VerticalStackLayout Spacing="8">
                     <Label x:Name="LblCuenta" Text="Cuenta" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
-                    <Entry x:Name="TxtCuenta" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00100001" ReturnType="Next" />
+                    <Entry x:Name="TxtCuenta" TextColor="{DynamicResource Texto}" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00100001" ReturnType="Next" />
 
                     <Label x:Name="LblDestino" Text="Cuenta de destino" FontAttributes="Bold" TextColor="{DynamicResource Texto}" IsVisible="False" />
-                    <Entry x:Name="TxtDestino" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00200001" ReturnType="Next" IsVisible="False" />
+                    <Entry x:Name="TxtDestino" TextColor="{DynamicResource Texto}" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00200001" ReturnType="Next" IsVisible="False" />
 
                     <Label Text="Importe" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
-                    <Entry x:Name="TxtImporte" Keyboard="Numeric" Placeholder="Ej.: 150 o 75,50" ReturnType="Go"
+                    <Entry x:Name="TxtImporte" ClassId="importe" TextColor="{DynamicResource Texto}" Keyboard="Numeric" Placeholder="Ej.: 150 o 75,50" ReturnType="Go"
                            Completed="OnRegistrarClicked" />
 
                     <Button x:Name="BtnRegistrar" Clicked="OnRegistrarClicked"

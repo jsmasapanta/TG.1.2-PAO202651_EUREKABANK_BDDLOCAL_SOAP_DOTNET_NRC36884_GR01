@@ -245,7 +245,9 @@ namespace ec.edu.monster.vista
             string[] cuadros = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
             int i = 0;
             Console.CursorVisible = false;
-            while (!tarea.Wait(90))
+            // Se espera con el WaitHandle y no con tarea.Wait: Wait lanza AggregateException si el servidor
+            // responde con error y la vista mostraría "Se han producido uno o varios errores." en vez del mensaje.
+            while (!((IAsyncResult)tarea).AsyncWaitHandle.WaitOne(90))
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.Write("\r  " + cuadros[i++ % cuadros.Length] + " ");

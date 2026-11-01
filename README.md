@@ -23,6 +23,20 @@ Operaciones: **consultar cuenta y movimientos, depósito, retiro y transferencia
 
 ---
 
+## Inicio de sesión en cada cliente
+
+Todos piden `monster` / `monster69`, muestran los intentos restantes que envía el servidor y si el servidor responde, y permiten cambiar la IP y el puerto del servidor desde la misma pantalla.
+
+| Panel del servidor (`http://IP:8087/`) | Cliente web (`http://IP:5087/`) |
+|:-:|:-:|
+| <img src="05.%20DOCUMENTACI%C3%93N/capturas/SERVIDOR/01_panel_login.png" width="420"> | <img src="05.%20DOCUMENTACI%C3%93N/capturas/CLIWEB/01_login_intentos.png" width="420"> |
+| **Escritorio (Windows Forms)** | **Consola** |
+| <img src="05.%20DOCUMENTACI%C3%93N/capturas/CLIESC/01_login_intentos.png" width="420"> | <img src="05.%20DOCUMENTACI%C3%93N/capturas/CLICON/03_login_error.png" width="420"> |
+| **Móvil (tablet Samsung SM-P610)** | **Móvil: intentos restantes** |
+| <img src="05.%20DOCUMENTACI%C3%93N/capturas/CLIMOV/01_login.png" width="420"> | <img src="05.%20DOCUMENTACI%C3%93N/capturas/CLIMOV/03_login_intentos.png" width="420"> |
+
+---
+
 ## 1. Arquitectura
 
 ```
@@ -44,7 +58,8 @@ Operaciones: **consultar cuenta y movimientos, depósito, retiro y transferencia
 ## 2. Estructura del repositorio
 
 ```
-01. UML/03. DIAGRAMAS   casos de uso, actividad, secuencia, clases, arquitectura (.puml + .png)
+01. UML/03. DIAGRAMAS   PowerDesigner 16.7 (.oom/.eam + .png): 01_CASO_USO, 02_ACTIVIDAD,
+                        03_SECUENCIA, 04_CLASES, 05_ARQUITECTURA
 02. MER/                modelo conceptual, lógico y físico (.puml + .png)
 03. BDD/                01_Crea_BD.sql, 02_Carga_Datos.sql, 03_Crea_Login_monster.sql,
                         04_Consultas_Prueba.sql y crear_bdd.ps1 (ejecuta todo)
@@ -287,6 +302,8 @@ El script crea el sitio **EUREKA** en el puerto **8087**, abre el firewall y mue
 | 14 | Servidor SOAP apagado | — | "No se pudo conectar a http://…:8087/WSEureka.svc. Verifica IP, puerto y red." |
 | 14b | Host inválido en la configuración | `SoapHost` = "mal host" | "Host del servidor inválido…" |
 | 15 | Página protegida (web) | `/Banco/Movimientos` sin sesión | Redirección al login |
+| 16 | Monitor por cliente | operar desde consola, escritorio, web y móvil | El panel cuenta `CONSOLA`, `ESCRITORIO`, `WEB` y `MOVIL` por separado |
+| 17 | Cambiar servidor | `http://IP:8087/WSEureka.svc` escrito en el campo de IP | Se separan IP y puerto y el cliente conecta |
 
 Para volver a los datos iniciales, ejecuta otra vez `03. BDD\crear_bdd.ps1`.
 
@@ -294,12 +311,13 @@ Para volver a los datos iniciales, ejecuta otra vez `03. BDD\crear_bdd.ps1`.
 
 | Archivo | Contenido |
 |---|---|
-| `01. UML/01. ERS/ERS_EUREKABANK_SOAP_DOTNET_BDD_GR01.docx` | Especificación de requisitos (IEEE 830): 14 RF y 8 RNF |
-| `01. UML/02. ECUD/ECUD_EUREKABANK_SOAP_DOTNET_BDD_GR01.docx` | Casos de uso CU01–CU07 con sus diagramas de actividad y secuencia |
+| `01. UML/01. ERS/ERS_EUREKABANK_SOAP_DOTNET_BDD_GR01.docx` | Especificación de requisitos (IEEE 830): 19 RF y 9 RNF |
+| `01. UML/02. ECUD/ECUD_EUREKABANK_SOAP_DOTNET_BDD_GR01.docx` | Casos de uso CU01–CU08 con sus diagramas de casos de uso, actividad y secuencia |
+| `01. UML/03. DIAGRAMAS/` | Diagramas en PowerDesigner 16.7: 5 de casos de uso, 4 de actividad, 8 de secuencia, clases y arquitectura |
 | `05. DOCUMENTACIÓN/WS_EUREKABANK_SOAP_DOTNET_BDD_GR01.docx` | Manual técnico paso a paso, con el código y las capturas |
-| `05. DOCUMENTACIÓN/MANUAL_EUREKABANK_SOAP_DOTNET_BDD_GR01.pptx` | Presentación (16 diapositivas) |
-| `05. DOCUMENTACIÓN/capturas/` | Capturas reales de servidor, BDD, consola, escritorio y web |
+| `05. DOCUMENTACIÓN/MANUAL_EUREKABANK_SOAP_DOTNET_BDD_GR01.pptx` | Presentación (17 diapositivas) |
+| `05. DOCUMENTACIÓN/capturas/` | Capturas reales de servidor (panel, WSDL, ASMX), BDD, consola, escritorio, web y móvil |
 
 Al abrir el manual en Word, si el índice aparece vacío: clic derecho sobre él → **Actualizar campo**.
 
-Los documentos se generan con los scripts de `_herramientas/generador_documentos_eureka` (fuera de este repositorio). Las capturas del móvil se tomaron en una tablet Samsung SM-P610 con `adb exec-out screencap -p`.
+Los documentos y diagramas se generan con los scripts de `_herramientas/generador_documentos_eureka` y `_herramientas/generador_powerdesigner_eureka` (fuera de este repositorio). Las capturas de la consola son de la ventana real (conhost), las del escritorio de la app Windows Forms real, las web y del panel con Chrome automático, y las del móvil de una tablet Samsung SM-P610 con `adb exec-out screencap -p`.

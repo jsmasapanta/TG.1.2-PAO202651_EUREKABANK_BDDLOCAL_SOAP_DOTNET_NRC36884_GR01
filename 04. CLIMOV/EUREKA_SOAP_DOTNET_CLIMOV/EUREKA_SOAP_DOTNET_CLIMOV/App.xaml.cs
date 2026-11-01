@@ -8,10 +8,11 @@ public partial class App : Application
 	{
 		InitializeComponent();
 		UserAppTheme = AppTheme.Light;
+		Tema.Aplicar(); // modo claro u oscuro guardado en el teléfono
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new LoginPage());
+		return new Window(new BienvenidaPage());
 	}
 }

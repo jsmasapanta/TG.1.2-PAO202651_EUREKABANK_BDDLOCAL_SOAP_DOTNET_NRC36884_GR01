@@ -1,4 +1,6 @@
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using ec.edu.monster.modelo;
@@ -24,41 +26,119 @@ public class ClienteEureka : IDisposable
     public const string NombreCliente = "WEB";
     private const string Namespace = "http://espe.edu.ec/eureka/";
 
-    private readonly ChannelFactory<IWSEureka>? _fabrica;
+    private ChannelFactory<IWSEureka>? _fabrica;
 
     /// <summary>Si Host o Puerto de appsettings.json no son válidos, este mensaje se muestra en cada pantalla.</summary>
-    private readonly string? _errorConfiguracion;
+    private string? _errorConfiguracion;
 
-    public ClienteEureka(IConfiguration configuracion)
+    private readonly string _ruta;
+    private readonly string _archivoConfiguracion;
+    private readonly object _candado = new();
+
+    public ClienteEureka(IConfiguration configuracion, IWebHostEnvironment entorno)
     {
-        string host = (configuracion["ServidorSoap:Host"] ?? "").Trim();
-        string puerto = (configuracion["ServidorSoap:Puerto"] ?? "").Trim();
-        string ruta = (configuracion["ServidorSoap:Ruta"] ?? "WSEureka.svc").Trim().TrimStart('/');
+        _ruta = (configuracion["ServidorSoap:Ruta"] ?? "WSEureka.svc").Trim().TrimStart('/');
+        _archivoConfiguracion = Path.Combine(entorno.ContentRootPath, "appsettings.json");
+        _errorConfiguracion = Conectar(configuracion["ServidorSoap:Host"] ?? "", configuracion["ServidorSoap:Puerto"] ?? "");
+    }
 
-        if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
+    public string UrlServidor { get; private set; } = "(configuración inválida)";
+
+    public string HostServidor { get; private set; } = "";
+
+    public string PuertoServidor { get; private set; } = "";
+
+    /// <summary>
+    /// Cambia el servidor desde la pantalla de login (la IP varía según la red). Si host y puerto son válidos,
+    /// crea la conexión nueva y los guarda en appsettings.json; si no, devuelve el mensaje de error.
+    /// Las sesiones abiertas con el servidor anterior dejan de servir: hay que volver a iniciar sesión.
+    /// </summary>
+    public string? CambiarServidor(string host, string puerto)
+    {
+        lock (_candado)
         {
-            _errorConfiguracion = $"Host del servidor inválido: \"{host}\". Escriba la IP de la PC del servidor en ServidorSoap:Host de appsettings.json.";
-        }
-        else if (!int.TryParse(puerto, out int numero) || numero < 1 || numero > 65535)
-        {
-            _errorConfiguracion = $"Puerto del servidor inválido: \"{puerto}\". Debe ser un número entre 1 y 65535 (el servidor usa 8087).";
-        }
-        else
-        {
-            UrlServidor = new UriBuilder("http", host, numero, ruta).Uri.ToString();
-            var binding = new BasicHttpBinding
+            ChannelFactory<IWSEureka>? anterior = _fabrica;
+            string? error = Conectar(host, puerto);
+            if (error != null)
             {
-                OpenTimeout = TimeSpan.FromSeconds(10),
-                SendTimeout = TimeSpan.FromSeconds(30),
-                ReceiveTimeout = TimeSpan.FromSeconds(30),
-                // Una cuenta con muchos movimientos supera los 64 KB por defecto.
-                MaxReceivedMessageSize = 10 * 1024 * 1024
-            };
-            _fabrica = new ChannelFactory<IWSEureka>(binding, new EndpointAddress(UrlServidor));
+                return error;
+            }
+            _errorConfiguracion = null;
+            if (anterior != null)
+            {
+                try { anterior.Close(); } catch { anterior.Abort(); }
+            }
+            Guardar();
+            return null;
         }
     }
 
-    public string UrlServidor { get; } = "(configuración inválida)";
+    /// <summary>Valida host y puerto y crea la ChannelFactory. Devuelve el mensaje de error o null si quedó conectado.</summary>
+    private string? Conectar(string host, string puerto)
+    {
+        host = host.Trim();
+        puerto = puerto.Trim();
+        if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
+        {
+            return $"Host del servidor inválido: \"{host}\". Escriba la IP de la PC del servidor (ejemplo: 192.168.1.10).";
+        }
+        if (!int.TryParse(puerto, out int numero) || numero < 1 || numero > 65535)
+        {
+            return $"Puerto del servidor inválido: \"{puerto}\". Debe ser un número entre 1 y 65535 (el servidor usa 8087).";
+        }
+        HostServidor = host;
+        PuertoServidor = numero.ToString();
+        UrlServidor = new UriBuilder("http", host, numero, _ruta).Uri.ToString();
+        var binding = new BasicHttpBinding
+        {
+            OpenTimeout = TimeSpan.FromSeconds(10),
+            SendTimeout = TimeSpan.FromSeconds(30),
+            ReceiveTimeout = TimeSpan.FromSeconds(30),
+            // Una cuenta con muchos movimientos supera los 64 KB por defecto.
+            MaxReceivedMessageSize = 10 * 1024 * 1024
+        };
+        _fabrica = new ChannelFactory<IWSEureka>(binding, new EndpointAddress(UrlServidor));
+        return null;
+    }
+
+    /// <summary>Escribe Host y Puerto en la sección ServidorSoap de appsettings.json (para el próximo arranque).</summary>
+    private void Guardar()
+    {
+        try
+        {
+            JsonNode raiz = JsonNode.Parse(File.ReadAllText(_archivoConfiguracion)) ?? new JsonObject();
+            JsonObject seccion = raiz["ServidorSoap"] as JsonObject ?? new JsonObject();
+            seccion["Host"] = HostServidor;
+            seccion["Puerto"] = int.Parse(PuertoServidor);
+            raiz["ServidorSoap"] = seccion;
+            File.WriteAllText(_archivoConfiguracion, raiz.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+        {
+            // Si no se puede escribir (por ejemplo publicada en una carpeta de solo lectura), el cambio vale hasta reiniciar.
+        }
+    }
+
+    // Solo para el indicador "Servidor activo": pide el WSDL con un tiempo de espera corto.
+    private static readonly HttpClient _ping = new() { Timeout = TimeSpan.FromSeconds(3) };
+
+    /// <summary>true si el servidor SOAP responde (se usa en el indicador de la barra lateral y del login).</summary>
+    public async Task<bool> ServidorActivoAsync()
+    {
+        if (_fabrica == null)
+        {
+            return false;
+        }
+        try
+        {
+            using HttpResponseMessage r = await _ping.GetAsync(UrlServidor + "?wsdl");
+            return r.IsSuccessStatusCode;
+        }
+        catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+        {
+            return false;
+        }
+    }
 
     public Task<Empleado> LoginAsync(string usuario, string clave) =>
         InvocarAsync(null, c => c.LoginAsync(usuario, clave));

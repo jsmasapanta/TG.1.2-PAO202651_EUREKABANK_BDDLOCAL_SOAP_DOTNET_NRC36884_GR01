@@ -173,6 +173,7 @@ namespace ec.edu.monster.vista
                                $"  {Formato.Dinero(importe)}  (saldo {Formato.Dinero(saldo)})";
                 _lstSesion.Items.Insert(0, linea);
                 _txtImporte.Clear();
+                await MostrarComprobante(cuenta, destino, importe, saldo);
                 _txtImporte.Focus();
             }
             catch (ErrorServicioException ex)
@@ -183,6 +184,27 @@ namespace ec.edu.monster.vista
             {
                 _btnRegistrar.Enabled = true;
                 UseWaitCursor = false;
+            }
+        }
+
+        /// <summary>
+        /// Recibo de la operación. El número de movimiento y el titular se piden al servidor (consultarCuenta):
+        /// el movimiento recién grabado es el último de la cuenta. Si esa consulta falla, el recibo sale sin ellos.
+        /// </summary>
+        private async System.Threading.Tasks.Task MostrarComprobante(string cuenta, string destino, decimal importe, decimal saldo)
+        {
+            Cuenta datos = null;
+            try
+            {
+                datos = await _controlador.ConsultarCuentaAsync(cuenta);
+            }
+            catch (ErrorServicioException)
+            {
+            }
+            string empleado = _controlador.Empleado.Codigo + " · " + _controlador.Empleado.Nombre;
+            using (var recibo = new FormComprobante(_tipo, cuenta, destino, datos, datos?.NumeroMovimientos ?? 0, importe, saldo, empleado))
+            {
+                recibo.ShowDialog(FindForm());
             }
         }
 

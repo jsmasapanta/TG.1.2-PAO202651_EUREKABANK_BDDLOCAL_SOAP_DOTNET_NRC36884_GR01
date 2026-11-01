@@ -3,49 +3,78 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ec.edu.monster.vista.MenuPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Fondo}">
+             BackgroundColor="{DynamicResource Fondo}">
 
-    <Grid RowDefinitions="Auto,*">
+    <ScrollView>
+        <VerticalStackLayout Padding="16,36,16,16" Spacing="16">
 
-        <!-- Encabezado -->
-        <Grid Grid.Row="0" BackgroundColor="{StaticResource Primary}" Padding="20,36,12,16" ColumnDefinitions="*,Auto">
-            <VerticalStackLayout>
-                <Label Text="$ EurekaBank" FontSize="24" FontAttributes="Bold" TextColor="White" />
-                <Label x:Name="LblEmpleado" FontSize="13" TextColor="#D6E6F5" />
-            </VerticalStackLayout>
-            <Button Grid.Column="1" Text="Salir" Clicked="OnCerrarSesionClicked"
-                    BackgroundColor="#A93226" TextColor="White" FontSize="13"
-                    HeightRequest="38" Padding="14,0" VerticalOptions="Center" />
-        </Grid>
+            <!-- Saludo con la foto, modo oscuro y salir -->
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                <Border WidthRequest="48" HeightRequest="48" StrokeThickness="2" Stroke="{StaticResource Sulley}" StrokeShape="Ellipse">
+                    <Image Source="monster.jpg" Aspect="AspectFill" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label x:Name="LblSaludo" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
+                    <Label x:Name="LblEmpleado" FontSize="12" TextColor="{DynamicResource TextoSuave}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="2" x:Name="BtnTema" Text="🌙" Clicked="OnTemaClicked" FontSize="18"
+                        BackgroundColor="{DynamicResource Tarjeta}" WidthRequest="44" HeightRequest="44" CornerRadius="22" Padding="0" />
+                <Button Grid.Column="3" Text="Salir" Clicked="OnCerrarSesionClicked"
+                        BackgroundColor="#A93226" TextColor="White" FontSize="13" FontAttributes="Bold"
+                        HeightRequest="40" Padding="14,0" CornerRadius="20" VerticalOptions="Center" />
+            </Grid>
 
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="16" Spacing="12">
-                <Label Text="¿Qué desea hacer?" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
-
-                <Grid ColumnDefinitions="*,*" RowDefinitions="110,110" ColumnSpacing="12" RowSpacing="12">
-                    <Button Grid.Row="0" Grid.Column="0" Text="≡   Movimientos" Clicked="OnMovimientosClicked"
-                            BackgroundColor="#0D6EFD" TextColor="White" FontSize="20" FontAttributes="Bold" CornerRadius="14" />
-                    <Button Grid.Row="0" Grid.Column="1" Text="+   Depósito" Clicked="OnDepositoClicked"
-                            BackgroundColor="#198754" TextColor="White" FontSize="20" FontAttributes="Bold" CornerRadius="14" />
-                    <Button Grid.Row="1" Grid.Column="0" Text="−   Retiro" Clicked="OnRetiroClicked"
-                            BackgroundColor="#C0392B" TextColor="White" FontSize="20" FontAttributes="Bold" CornerRadius="14" />
-                    <Button Grid.Row="1" Grid.Column="1" Text="⇄   Transferencia" Clicked="OnTransferenciaClicked"
-                            BackgroundColor="#6F42C1" TextColor="White" FontSize="20" FontAttributes="Bold" CornerRadius="14" />
+            <!-- Tarjeta de bienvenida con la marca -->
+            <Border StrokeThickness="0" StrokeShape="RoundRectangle 18" HeightRequest="130" Padding="18,14">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#0B4F8A" Offset="0" />
+                        <GradientStop Color="#082E54" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Label Text="MONSTER · EUREKA BANK" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Mike}" CharacterSpacing="2" />
+                    <Label Grid.Row="1" Text="Ventanilla" FontSize="24" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
+                    <Label Grid.Row="2" x:Name="LblSesion" FontSize="12" TextColor="#C8DEF5" />
                 </Grid>
+            </Border>
 
-                <Border Padding="16" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 14">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Operaciones de esta sesión" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
-                        <VerticalStackLayout x:Name="ListaSesion" Spacing="4" />
-                    </VerticalStackLayout>
-                </Border>
+            <!-- Accesos: íconos redondos de colores -->
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                <VerticalStackLayout Grid.Column="0" Spacing="6">
+                    <Button Text="≡" Clicked="OnMovimientosClicked" BackgroundColor="#0D6EFD" TextColor="White" FontSize="26" FontAttributes="Bold"
+                            WidthRequest="62" HeightRequest="62" CornerRadius="18" Padding="0" />
+                    <Label Text="Movimientos" FontSize="11" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Texto}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="6">
+                    <Button Text="+" Clicked="OnDepositoClicked" BackgroundColor="#198754" TextColor="White" FontSize="26" FontAttributes="Bold"
+                            WidthRequest="62" HeightRequest="62" CornerRadius="18" Padding="0" />
+                    <Label Text="Depósito" FontSize="11" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Texto}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="2" Spacing="6">
+                    <Button Text="−" Clicked="OnRetiroClicked" BackgroundColor="#C0392B" TextColor="White" FontSize="26" FontAttributes="Bold"
+                            WidthRequest="62" HeightRequest="62" CornerRadius="18" Padding="0" />
+                    <Label Text="Retiro" FontSize="11" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Texto}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="3" Spacing="6">
+                    <Button Text="⇄" Clicked="OnTransferenciaClicked" BackgroundColor="#6F42C1" TextColor="White" FontSize="24" FontAttributes="Bold"
+                            WidthRequest="62" HeightRequest="62" CornerRadius="18" Padding="0" />
+                    <Label Text="Transferencia" FontSize="11" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Texto}" />
+                </VerticalStackLayout>
+            </Grid>
 
-                <Border StrokeThickness="0" StrokeShape="RoundRectangle 14">
-                    <Image Source="monster.jpg" Aspect="AspectFill" HeightRequest="220" />
-                </Border>
+            <Border Padding="16" BackgroundColor="{DynamicResource Tarjeta}" StrokeThickness="0" StrokeShape="RoundRectangle 14">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Operaciones de esta sesión" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
+                    <VerticalStackLayout x:Name="ListaSesion" Spacing="4" />
+                </VerticalStackLayout>
+            </Border>
 
-                <Label x:Name="LblServidor" FontSize="12" TextColor="{StaticResource TextoSuave}" />
-            </VerticalStackLayout>
-        </ScrollView>
-    </Grid>
+            <!-- Estado del servidor -->
+            <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Ellipse x:Name="PuntoServidor" WidthRequest="9" HeightRequest="9" Fill="#6C757D" VerticalOptions="Center" />
+                <Label x:Name="LblServidor" Text="Comprobando servidor…" FontSize="12" TextColor="{DynamicResource TextoSuave}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

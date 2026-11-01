@@ -16,7 +16,8 @@ Servidor: `appsettings.json` del proyecto, incrustado como `EmbeddedResource` (a
 "ServidorSoap": { "Host": "192.168.100.2", "Puerto": 8087, "Ruta": "WSEureka.svc" }
 ```
 - Celular por WiFi: `Host` = IP de la PC del servidor (`ipconfig`), misma red y firewall abierto (`04. CLIWEB\Habilitar-Firewall-RedLocal.ps1`).
-- Celular por cable: `adb reverse tcp:8087 tcp:8087` y en la pantalla de login cambiar la URL a `http://localhost:8087/WSEureka.svc` (solo para esa ejecución).
+- **Desde la pantalla:** login → **⚙ Servidor SOAP (IIS)** → IP y puerto → **Guardar** (queda guardado en el teléfono; **Restablecer** vuelve al de `appsettings.json`). Así no hace falta recompilar cuando cambia la red.
+- Pantallas: bienvenida, login con caritas de intentos y estado del servidor, menú con saludo y accesos de colores, cuenta como tarjeta con gráficos, comprobante (Compartir) y modo oscuro (🌙 en el menú).
 - Emulador: `http://10.0.2.2:8087/WSEureka.svc`.
 
 Envía `X-Cliente: MOVIL`, arma el sobre con `SecurityElement.Escape` y el token en `<s:Header>`; "Salir" llama a `cerrarSesion`. Verificación: en el panel `http://IP:8087/` las peticiones aparecen con la etiqueta MOVIL.

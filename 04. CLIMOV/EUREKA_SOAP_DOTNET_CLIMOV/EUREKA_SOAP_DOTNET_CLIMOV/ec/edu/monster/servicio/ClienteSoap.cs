@@ -38,17 +38,59 @@ public sealed class ClienteSoap
     /// <summary>Token de la sesión; nunca se muestra en pantalla.</summary>
     private string? _token;
 
+    /// <summary>Última respuesta correcta del servidor: el token vence 30 minutos después.</summary>
+    private DateTime? _ultimaActividad;
+
+    /// <summary>Minutos que le quedan a la sesión (null si no hay sesión).</summary>
+    public int? MinutosSesion =>
+        _token == null || _ultimaActividad == null
+            ? null
+            : Math.Max(0, 30 - (int)(DateTime.Now - _ultimaActividad.Value).TotalMinutes);
+
+    /// <summary>true si el servidor responde (pide el WSDL con 3 segundos de espera). Para el indicador "Servidor activo".</summary>
+    public async Task<bool> ServidorActivoAsync()
+    {
+        if (!Uri.TryCreate(Url, UriKind.Absolute, out Uri? destino))
+        {
+            return false;
+        }
+        try
+        {
+            using var espera = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            using HttpResponseMessage r = await _http.GetAsync(destino + "?wsdl", espera.Token);
+            return r.IsSuccessStatusCode;
+        }
+        catch (Exception e) when (e is HttpRequestException || e is TaskCanceledException || e is SocketException || e is IOException)
+        {
+            return false;
+        }
+    }
+
     // Constructor privado: solo la propia clase crea la instancia.
     private ClienteSoap()
     {
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
     }
 
+    private const string ClavePreferencia = "servidor_eureka";
+
     /// <summary>
-    /// URL del servicio. Arranca con la de appsettings.json (incrustado en la app); en la pantalla de login
-    /// se puede cambiar solo para esta ejecución (por ejemplo a http://localhost:8087/... con adb reverse).
+    /// URL del servicio. Por defecto la de appsettings.json (incrustado en la app); si en el login se cambia
+    /// la IP o el puerto, la nueva se guarda en el teléfono y se usa hasta "Restablecer".
     /// </summary>
-    public string Url { get; set; } = ConfiguracionServidor.Url;
+    public string Url
+    {
+        get => Preferences.Default.Get(ClavePreferencia, ConfiguracionServidor.Url);
+        set => Preferences.Default.Set(ClavePreferencia, value);
+    }
+
+    /// <summary>Vuelve a la dirección de appsettings.json.</summary>
+    public void RestablecerServidor()
+    {
+        Preferences.Default.Remove(ClavePreferencia);
+        _token = null;
+        _ultimaActividad = null;
+    }
 
     public async Task<Empleado> LoginAsync(string usuario, string clave)
     {
@@ -62,6 +104,7 @@ public sealed class ClienteSoap
             Token = Texto(r, "Token")
         };
         _token = empleado.Token;
+        _ultimaActividad = DateTime.Now;
         return empleado;
     }
 
@@ -70,6 +113,7 @@ public sealed class ClienteSoap
     {
         string? token = _token;
         _token = null;
+        _ultimaActividad = null;
         if (string.IsNullOrEmpty(token))
         {
             return;
@@ -151,7 +195,12 @@ public sealed class ClienteSoap
         {
             using HttpResponseMessage respuesta = await _http.SendAsync(peticion);
             string cuerpo = await respuesta.Content.ReadAsStringAsync();
-            return LeerRespuesta(cuerpo, (int)respuesta.StatusCode, operacion);
+            XElement resultado = LeerRespuesta(cuerpo, (int)respuesta.StatusCode, operacion);
+            if (_token != null)
+            {
+                _ultimaActividad = DateTime.Now;
+            }
+            return resultado;
         }
         catch (ErrorServicioException)
         {

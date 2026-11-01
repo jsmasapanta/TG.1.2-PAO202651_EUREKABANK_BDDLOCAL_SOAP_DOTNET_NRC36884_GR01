@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using ec.edu.monster.modelo;
 
 namespace ec.edu.monster.vista;
@@ -22,6 +23,30 @@ public static class Formato
         TipoOperacion.Retiro => Color.FromArgb("#C0392B"),
         _ => Color.FromArgb("#6F42C1")
     };
+
+    /// <summary>Número de cuenta en dos grupos, como en una tarjeta: 0010 0001.</summary>
+    public static string NumeroTarjeta(string cuenta) =>
+        cuenta.Length == 8 ? cuenta[..4] + "  " + cuenta[4..] : cuenta;
+
+    /// <summary>Símbolo según la moneda que manda el servidor (Soles, Dólares).</summary>
+    public static string Simbolo(string? moneda) =>
+        (moneda ?? "").StartsWith("D", StringComparison.OrdinalIgnoreCase) ? "$" : "S/";
+
+    /// <summary>
+    /// Intentos que quedan según el mensaje del servidor ("Intentos restantes: 2"). Sin mensaje: los 3.
+    /// Solo sirve para dibujar las caritas del login; quien cuenta los intentos es el servidor.
+    /// </summary>
+    public static int IntentosRestantes(string? mensaje)
+    {
+        if (string.IsNullOrEmpty(mensaje)) return 3;
+        Match m = Regex.Match(mensaje, @"Intentos restantes:\s*(\d+)");
+        if (m.Success) return int.Parse(m.Groups[1].Value);
+        return mensaje.Contains("bloquead", StringComparison.OrdinalIgnoreCase) ? 0 : 3;
+    }
+
+    /// <summary>Host y puerto de la URL, para el indicador (192.168.100.2:8087).</summary>
+    public static string Host(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out Uri? u) ? u.Authority : url;
 
     /// <summary>El servidor manda la acción (INGRESO o SALIDA); aquí solo se elige el color y el signo.</summary>
     public static bool EsIngreso(Movimiento m) => m.Accion == "INGRESO";

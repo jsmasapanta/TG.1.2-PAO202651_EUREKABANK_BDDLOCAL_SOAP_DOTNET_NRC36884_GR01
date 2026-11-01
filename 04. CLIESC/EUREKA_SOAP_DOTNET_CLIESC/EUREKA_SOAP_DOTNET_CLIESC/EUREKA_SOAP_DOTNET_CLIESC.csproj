@@ -64,6 +64,21 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ec\edu\monster\vista\Formato.cs" />
+    <Compile Include="ec\edu\monster\vista\FormBienvenida.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ec\edu\monster\vista\FormComprobante.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ec\edu\monster\vista\GraficoCuenta.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ec\edu\monster\vista\IndicadorServidor.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ec\edu\monster\vista\TarjetaCuenta.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ec\edu\monster\vista\Tema.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

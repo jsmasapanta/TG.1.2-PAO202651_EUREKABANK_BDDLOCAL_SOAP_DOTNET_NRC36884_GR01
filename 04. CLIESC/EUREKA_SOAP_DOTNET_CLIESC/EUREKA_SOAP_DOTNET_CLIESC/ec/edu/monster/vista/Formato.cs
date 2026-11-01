@@ -34,6 +34,32 @@ namespace ec.edu.monster.vista
             return decimal.TryParse(normalizado, NumberStyles.Number, CultureInfo.InvariantCulture, out importe);
         }
 
+        /// <summary>Número de cuenta en dos grupos, como en una tarjeta: 0010 0001.</summary>
+        public static string NumeroTarjeta(string cuenta) =>
+            cuenta != null && cuenta.Length == 8 ? cuenta.Substring(0, 4) + " " + cuenta.Substring(4) : cuenta;
+
+        /// <summary>Símbolo según la moneda que manda el servidor (Soles, Dólares).</summary>
+        public static string Simbolo(string moneda) =>
+            (moneda ?? string.Empty).StartsWith("D", System.StringComparison.OrdinalIgnoreCase) ? "$" : "S/";
+
+        /// <summary>
+        /// Intentos que quedan según el mensaje del servidor ("Intentos restantes: 2"). Sin mensaje: los 3.
+        /// Solo sirve para dibujar las caritas del login; quien cuenta los intentos es el servidor.
+        /// </summary>
+        public static int IntentosRestantes(string mensaje)
+        {
+            if (string.IsNullOrEmpty(mensaje)) return 3;
+            var m = System.Text.RegularExpressions.Regex.Match(mensaje, @"Intentos restantes:\s*(\d+)");
+            if (m.Success) return int.Parse(m.Groups[1].Value);
+            return mensaje.IndexOf("bloquead", System.StringComparison.OrdinalIgnoreCase) >= 0 ? 0 : 3;
+        }
+
+        /// <summary>Host y puerto de la URL, para los indicadores (192.168.100.2:8087).</summary>
+        public static string Host(string url)
+        {
+            return System.Uri.TryCreate(url, System.UriKind.Absolute, out System.Uri u) ? u.Authority : url;
+        }
+
         /// <summary>Imagen de Monsters Inc. incluida dentro del .exe (Recursos/monster.jpg).</summary>
         public static Image Monster()
         {

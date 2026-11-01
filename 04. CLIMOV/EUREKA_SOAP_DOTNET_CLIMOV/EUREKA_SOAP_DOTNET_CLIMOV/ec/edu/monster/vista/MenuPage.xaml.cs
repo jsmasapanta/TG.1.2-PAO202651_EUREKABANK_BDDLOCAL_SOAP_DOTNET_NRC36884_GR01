@@ -11,8 +11,27 @@ public partial class MenuPage : ContentPage
     public MenuPage()
     {
         InitializeComponent();
-        LblEmpleado.Text = $"{_controlador.Empleado?.Nombre} · Empleado {_controlador.Empleado?.Codigo}";
-        LblServidor.Text = "Conectado a: " + _controlador.UrlServidor;
+        string nombre = _controlador.Empleado?.Nombre ?? "";
+        LblSaludo.Text = "Hola, " + (nombre.Split(' ').FirstOrDefault() ?? nombre);
+        LblEmpleado.Text = $"Empleado {_controlador.Empleado?.Codigo} · ventanilla";
+        BtnTema.Text = Tema.Oscuro ? "☀" : "🌙";
+    }
+
+    private void OnTemaClicked(object? sender, EventArgs e)
+    {
+        Tema.Alternar();
+        BtnTema.Text = Tema.Oscuro ? "☀" : "🌙";
+        OnAppearing(); // repinta la lista con los colores nuevos
+    }
+
+    /// <summary>Estado del servidor y minutos que le quedan a la sesión.</summary>
+    private async Task ActualizarEstadoAsync()
+    {
+        int? minutos = _controlador.MinutosSesion;
+        LblSesion.Text = minutos == null ? "" : $"⏱ Sesión activa · vence en {minutos} min";
+        bool activo = await _controlador.ServidorActivoAsync();
+        PuntoServidor.Fill = Color.FromArgb(activo ? "#22C55E" : "#C0392B");
+        LblServidor.Text = (activo ? "Servidor activo · " : "Sin respuesta · ") + Formato.Host(_controlador.UrlServidor);
     }
 
     /// <summary>Al volver de una operación se actualiza la lista de la sesión.</summary>
@@ -22,12 +41,13 @@ public partial class MenuPage : ContentPage
         ListaSesion.Children.Clear();
         foreach (string linea in _controlador.OperacionesSesion)
         {
-            ListaSesion.Children.Add(new Label { Text = linea, FontSize = 13, TextColor = Color.FromArgb("#212529") });
+            ListaSesion.Children.Add(new Label { Text = linea, FontSize = 13, TextColor = Tema.Recurso("Texto") });
         }
         if (_controlador.OperacionesSesion.Count == 0)
         {
-            ListaSesion.Children.Add(new Label { Text = "Aún no hay operaciones.", FontSize = 13, TextColor = Color.FromArgb("#6C757D") });
+            ListaSesion.Children.Add(new Label { Text = "Aún no hay operaciones.", FontSize = 13, TextColor = Tema.Recurso("TextoSuave") });
         }
+        _ = ActualizarEstadoAsync();
     }
 
     private async void OnMovimientosClicked(object? sender, EventArgs e) =>

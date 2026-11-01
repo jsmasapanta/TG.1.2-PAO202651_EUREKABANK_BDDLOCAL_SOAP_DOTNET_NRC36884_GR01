@@ -48,7 +48,7 @@ public static class ConfiguracionServidor
         if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
         {
             throw new InvalidOperationException(
-                $"Host del servidor inválido: \"{host}\". Escriba la IP de la PC del servidor en appsettings.json y vuelva a compilar.");
+                $"Host del servidor inválido: \"{host}\". Escriba la IP de la PC del servidor (ejemplo: 192.168.100.2) en Servidor SOAP o en appsettings.json.");
         }
         if (!int.TryParse(puerto.Trim(), out int numero) || numero < 1 || numero > 65535)
         {

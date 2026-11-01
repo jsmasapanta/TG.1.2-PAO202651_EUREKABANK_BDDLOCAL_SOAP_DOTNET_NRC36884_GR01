@@ -13,6 +13,8 @@ public class RequiereSesionAttribute : ActionFilterAttribute
     public const string ClaveNombre = "NombreEmpleado";
     /// <summary>Token que devolvió el login; nunca se muestra en las vistas.</summary>
     public const string ClaveToken = "Token";
+    /// <summary>Hora (ticks) de la última respuesta del servidor; el token vence 30 minutos después.</summary>
+    public const string ClaveActividad = "UltimaActividad";
 
     public override void OnActionExecuting(ActionExecutingContext context)
     {

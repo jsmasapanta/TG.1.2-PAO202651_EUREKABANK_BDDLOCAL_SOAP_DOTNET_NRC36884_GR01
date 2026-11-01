@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using ec.edu.monster.modelo;
@@ -28,15 +29,39 @@ namespace ec.edu.monster.servicio
 
         public static ClienteEureka Instancia => _instancia.Value;
 
-        private readonly ChannelFactory<IWSEureka> _fabrica;
+        private ChannelFactory<IWSEureka> _fabrica;
 
         /// <summary>Token de la sesión; nunca se muestra en pantalla.</summary>
         private string _token;
 
+        /// <summary>Última respuesta correcta del servidor: el token vence 30 minutos después.</summary>
+        private DateTime? _ultimaActividad;
+
         // Constructor privado: solo la propia clase crea la instancia.
         private ClienteEureka()
         {
-            UrlServidor = ConfiguracionServidor.LeerUrl();
+            Conectar(ConfiguracionServidor.LeerUrl());
+        }
+
+        public string UrlServidor { get; private set; }
+
+        /// <summary>
+        /// Cambia el servidor desde la pantalla (la IP varía según la red). Valida host y puerto, lo guarda en el
+        /// .exe.config y crea la conexión nueva. La sesión anterior se olvida: hay que volver a iniciar sesión.
+        /// </summary>
+        public void CambiarServidor(string host, string puerto)
+        {
+            string url = ConfiguracionServidor.ArmarUrl(host, puerto); // lanza InvalidOperationException si no es válido
+            ConfiguracionServidor.Guardar(host, puerto);
+            _token = null;
+            _ultimaActividad = null;
+            try { _fabrica.Close(); } catch { _fabrica.Abort(); }
+            Conectar(url);
+        }
+
+        private void Conectar(string url)
+        {
+            UrlServidor = url;
             var binding = new BasicHttpBinding
             {
                 OpenTimeout = TimeSpan.FromSeconds(10),
@@ -45,15 +70,38 @@ namespace ec.edu.monster.servicio
                 // Una cuenta con muchos movimientos supera los 64 KB por defecto.
                 MaxReceivedMessageSize = 10 * 1024 * 1024
             };
-            _fabrica = new ChannelFactory<IWSEureka>(binding, new EndpointAddress(UrlServidor));
+            _fabrica = new ChannelFactory<IWSEureka>(binding, new EndpointAddress(url));
         }
 
-        public string UrlServidor { get; }
+        /// <summary>Minutos que le quedan a la sesión (null si no hay sesión).</summary>
+        public int? MinutosSesion =>
+            _token == null || _ultimaActividad == null
+                ? (int?)null
+                : Math.Max(0, 30 - (int)(DateTime.Now - _ultimaActividad.Value).TotalMinutes);
+
+        /// <summary>true si el servidor responde (pide el WSDL con 3 segundos de espera). Para el indicador "Servidor activo".</summary>
+        public bool ServidorActivo()
+        {
+            try
+            {
+                var peticion = (HttpWebRequest)WebRequest.Create(UrlServidor + "?wsdl");
+                peticion.Timeout = 3000;
+                using (var respuesta = (HttpWebResponse)peticion.GetResponse())
+                {
+                    return respuesta.StatusCode == HttpStatusCode.OK;
+                }
+            }
+            catch (WebException)
+            {
+                return false;
+            }
+        }
 
         public Empleado Login(string usuario, string clave)
         {
             Empleado empleado = Invocar(c => c.Login(usuario, clave));
             _token = empleado.Token;
+            _ultimaActividad = DateTime.Now;
             return empleado;
         }
 
@@ -62,6 +110,7 @@ namespace ec.edu.monster.servicio
         {
             string token = _token;
             _token = null;
+            _ultimaActividad = null;
             if (token == null)
             {
                 return;
@@ -109,6 +158,10 @@ namespace ec.edu.monster.servicio
                     resultado = llamada(canal);
                 }
                 comunicacion.Close();
+                if (_token != null)
+                {
+                    _ultimaActividad = DateTime.Now;
+                }
                 return resultado;
             }
             catch (FaultException<ErrorServicio> ex)

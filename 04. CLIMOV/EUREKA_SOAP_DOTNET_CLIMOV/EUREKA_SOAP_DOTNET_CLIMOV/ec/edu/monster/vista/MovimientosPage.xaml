@@ -3,35 +3,58 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ec.edu.monster.vista.MovimientosPage"
              Title="Movimientos"
-             BackgroundColor="{StaticResource Fondo}">
+             BackgroundColor="{DynamicResource Fondo}">
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="12">
 
-            <Border Padding="16" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 14">
+            <Border Padding="16" BackgroundColor="{DynamicResource Tarjeta}" StrokeThickness="0" StrokeShape="RoundRectangle 14">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="Número de cuenta" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+                    <Label Text="Número de cuenta" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
                     <Entry x:Name="TxtCuenta" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00100001"
-                           ReturnType="Search" Completed="OnConsultarClicked" />
+                           TextColor="{DynamicResource Texto}" ReturnType="Search" Completed="OnConsultarClicked" />
                     <Button x:Name="BtnConsultar" Text="CONSULTAR" Clicked="OnConsultarClicked"
-                            BackgroundColor="#0D6EFD" TextColor="White" FontAttributes="Bold" HeightRequest="48" />
+                            BackgroundColor="#0D6EFD" TextColor="White" FontAttributes="Bold" HeightRequest="48" CornerRadius="10" />
                     <ActivityIndicator x:Name="Cargando" IsRunning="False" IsVisible="False" Color="#0D6EFD" />
                     <Label x:Name="LblError" IsVisible="False" TextColor="{StaticResource Error}" FontSize="14" />
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Datos de la cuenta -->
-            <Border x:Name="TarjetaCuenta" IsVisible="False" Padding="16" BackgroundColor="White"
-                    StrokeThickness="0" StrokeShape="RoundRectangle 14">
-                <VerticalStackLayout Spacing="4">
-                    <Label x:Name="LblCliente" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
-                    <Label x:Name="LblDetalle" FontSize="13" TextColor="{StaticResource TextoSuave}" />
-                    <Label Text="SALDO" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextoSuave}" Margin="0,8,0,0" />
-                    <Label x:Name="LblSaldo" FontSize="30" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
-                </VerticalStackLayout>
+            <!-- La cuenta como tarjeta bancaria -->
+            <Border x:Name="TarjetaCuenta" IsVisible="False" StrokeThickness="0" StrokeShape="RoundRectangle 18"
+                    Padding="18,14" HeightRequest="172">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#0B4F8A" Offset="0" />
+                        <GradientStop Color="#082E54" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Shadow>
+                    <Shadow Brush="#082E54" Opacity="0.35" Radius="14" Offset="0,6" />
+                </Border.Shadow>
+                <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" ColumnDefinitions="*,Auto">
+                    <Label x:Name="LblTipoCuenta" FontSize="10" TextColor="#C8DEF5" />
+                    <VerticalStackLayout Grid.Column="1" Grid.RowSpan="2">
+                        <Label Text="SALDO" FontSize="10" TextColor="#C8DEF5" HorizontalTextAlignment="End" />
+                        <Label x:Name="LblSaldo" FontSize="24" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" />
+                    </VerticalStackLayout>
+                    <BoxView Grid.Row="1" WidthRequest="40" HeightRequest="28" CornerRadius="5" Color="#E3BE4F"
+                             HorizontalOptions="Start" Margin="0,8,0,0" />
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" x:Name="LblNumero" FontFamily="monospace" FontSize="22"
+                           FontAttributes="Bold" TextColor="White" VerticalOptions="Center" CharacterSpacing="2" />
+                    <Label Grid.Row="3" Grid.ColumnSpan="2" x:Name="LblCliente" FontSize="13" FontAttributes="Bold" TextColor="White" />
+                    <Label Grid.Row="4" x:Name="LblDetalle" FontSize="10" TextColor="#C8DEF5" />
+                    <Label Grid.Row="4" Grid.Column="1" Text="MONSTER" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource Mike}" CharacterSpacing="2" />
+                </Grid>
             </Border>
 
-            <Label x:Name="LblTituloLista" IsVisible="False" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+            <!-- Gráficos -->
+            <Border x:Name="CajaGrafico" IsVisible="False" Padding="12" BackgroundColor="{DynamicResource Tarjeta}"
+                    StrokeThickness="0" StrokeShape="RoundRectangle 14">
+                <GraphicsView x:Name="Grafico" HeightRequest="170" />
+            </Border>
+
+            <Label x:Name="LblTituloLista" IsVisible="False" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
             <VerticalStackLayout x:Name="ListaMovimientos" Spacing="8" />
 
         </VerticalStackLayout>

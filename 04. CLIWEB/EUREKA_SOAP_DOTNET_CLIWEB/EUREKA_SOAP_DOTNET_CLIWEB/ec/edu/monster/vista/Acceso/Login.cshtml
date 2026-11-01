@@ -1,18 +1,26 @@
 @model LoginViewModel
 @{
     ViewData["Title"] = "Iniciar sesión";
+    // Las caritas solo dibujan lo que dice el servidor ("Intentos restantes: N"); él cuenta los intentos.
+    int intentos = Formato.IntentosRestantes(Model.Error);
 }
 
 <main class="login">
     <section class="login-tarjeta">
-        <img class="login-imagen" src="~/img/monster.jpg" alt="Monsters Inc." asp-append-version="true" />
+        <div class="login-foto">
+            <img class="login-imagen" src="~/img/monster.jpg" alt="Monsters Inc." asp-append-version="true" />
+            <div class="login-leyenda">
+                <strong>EurekaBank Monster</strong>
+                <span>SOAP .NET + SQL Server · ESPE</span>
+            </div>
+        </div>
 
         <div class="login-panel">
             <header class="login-encabezado">
                 <span class="login-icono">$</span>
                 <div>
                     <h1>EurekaBank</h1>
-                    <p>Cliente web · SOAP .NET + SQL Server</p>
+                    <p>Cliente web · empleado de ventanilla</p>
                 </div>
             </header>
 
@@ -22,18 +30,42 @@
 
                 <label for="Clave">Clave</label>
                 <div class="campo-clave">
-                    <input id="Clave" name="Clave" type="password" />
+                    <input id="Clave" name="Clave" type="password" class="@(string.IsNullOrEmpty(Model.Error) ? "" : "campo-error")" />
                     <button type="button" class="ver-clave" onclick="alternarClave()" title="Mostrar u ocultar la clave">Ver</button>
                 </div>
 
-                <button type="submit" class="boton boton-primario">INGRESAR</button>
-
-                @* Mensaje del servidor: clave incorrecta con intentos restantes, usuario bloqueado o falla de conexión. *@
+                @* Mensaje del servidor: credenciales inválidas con intentos restantes, cuenta bloqueada o falla de conexión. *@
                 @if (!string.IsNullOrEmpty(Model.Error))
                 {
-                    <p class="mensaje-error">@Model.Error</p>
+                    <p class="mensaje-error caja-error">✖ @Model.Error</p>
                 }
+
+                <div class="intentos">
+                    <span>Intentos:</span>
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <span class="carita @(i < intentos ? "viva" : "apagada")" title="@(i < intentos ? "disponible" : "usado")">👾</span>
+                    }
+                    <span class="estado-srv" data-estado-servidor><span class="punto"></span><span class="texto">Comprobando…</span></span>
+                </div>
+
+                <button type="submit" class="boton boton-primario">INGRESAR</button>
+                <button type="button" class="boton-tema en-login" onclick="cambiarTema()">🌙 Modo oscuro</button>
             </form>
+
+            @* La IP del servidor cambia según la red: se puede cambiar aquí sin tocar archivos. *@
+            <details class="cambiar-servidor" @(TempData.Peek("Servidor") != null || !string.IsNullOrEmpty(Model.Error) ? "open" : "")>
+                <summary>⚙ Servidor: <b>@ViewData["Host"]:@ViewData["Puerto"]</b> · cambiar</summary>
+                <form asp-action="CambiarServidor" method="post" class="fila-servidor" autocomplete="off">
+                    <input name="host" value="@ViewData["Host"]" placeholder="IP del servidor (ej.: 192.168.100.2)" />
+                    <input name="puerto" value="@ViewData["Puerto"]" inputmode="numeric" placeholder="8087" class="puerto" />
+                    <button type="submit" class="boton boton-primario guardar">Guardar</button>
+                </form>
+                @if (TempData["Servidor"] is string mensajeServidor)
+                {
+                    <p class="@(TempData["ServidorError"] is true ? "mensaje-error izquierda" : "mensaje-ok")">@mensajeServidor</p>
+                }
+            </details>
         </div>
     </section>
 </main>

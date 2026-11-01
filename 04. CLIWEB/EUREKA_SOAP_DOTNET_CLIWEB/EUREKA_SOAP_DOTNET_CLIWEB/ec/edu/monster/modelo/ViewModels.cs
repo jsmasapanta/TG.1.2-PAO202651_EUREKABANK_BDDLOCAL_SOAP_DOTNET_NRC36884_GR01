@@ -32,4 +32,22 @@ public class OperacionViewModel
 
     /// <summary>Operaciones registradas en esta sesión del navegador (la más reciente primero).</summary>
     public IList<string> Sesion { get; set; } = new List<string>();
+
+    /// <summary>Recibo de la última operación registrada (se muestra en una ventana sobre la pantalla).</summary>
+    public Comprobante? Comprobante { get; set; }
+}
+
+/// <summary>Datos del comprobante de una operación (solo get/set).</summary>
+public class Comprobante
+{
+    public TipoOperacion Tipo { get; set; }
+    public int NumeroMovimiento { get; set; }
+    public string Cuenta { get; set; } = "";
+    public string? CuentaDestino { get; set; }
+    public string Cliente { get; set; } = "";
+    public string Moneda { get; set; } = "";
+    public decimal Importe { get; set; }
+    public decimal NuevoSaldo { get; set; }
+    public DateTime Fecha { get; set; }
+    public string Empleado { get; set; } = "";
 }

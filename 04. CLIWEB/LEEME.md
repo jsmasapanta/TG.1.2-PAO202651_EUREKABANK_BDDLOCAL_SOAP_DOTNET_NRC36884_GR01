@@ -1,6 +1,6 @@
 # 04. CLIWEB — Cliente web (ASP.NET Core MVC .NET 8)
 
-`http://localhost:5087`. Todo dentro de `ec/edu/monster`:
+`http://IP-DE-LA-PC:5087` (en la misma PC también `http://localhost:5087`). Todo dentro de `ec/edu/monster`:
 - `controlador/` AccesoController (login/logout; los intentos los cuenta el servidor), BancoController (movimientos y operaciones), RequiereSesionAttribute.
 - `vista/` Acceso/Login, Banco/Movimientos, Banco/Operacion, Shared/_Layout (Program.cs indica a Razor que busque aquí).
 - `servicio/ClienteEureka.cs` registrado con `AddSingleton` (una sola ChannelFactory).
@@ -12,9 +12,9 @@
 
 `appsettings.json`:
 ```json
-"ServidorSoap": { "Host": "localhost", "Puerto": 8087, "Ruta": "WSEureka.svc" }
+"ServidorSoap": { "Host": "192.168.100.2", "Puerto": 8087, "Ruta": "WSEureka.svc" }
 ```
-Si el servidor está en otra PC, `Host` = su IP (`ipconfig` en esa PC). Si `Host` o `Puerto` no son válidos, la pantalla de login lo dice. Cada petición envía `X-Cliente: WEB` y el token de la sesión del usuario en el header SOAP; "Cerrar sesión" llama a `cerrarSesion`.
+`Host` = IP de la PC con el servidor en IIS (`ipconfig` en esa PC). **Desde la pantalla de login**: **⚙ Servidor · cambiar** → IP y puerto → **Guardar** (valida y lo escribe en `appsettings.json`). Si `Host` o `Puerto` no son válidos, la pantalla de login lo dice. Cada petición envía `X-Cliente: WEB` y el token de la sesión del usuario en el header SOAP; "Cerrar sesión" llama a `cerrarSesion`.
 
 ## Red local
 

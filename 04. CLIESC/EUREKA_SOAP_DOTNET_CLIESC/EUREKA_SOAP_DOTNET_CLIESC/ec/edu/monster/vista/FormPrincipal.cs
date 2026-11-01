@@ -36,10 +36,13 @@ namespace ec.edu.monster.vista
             // ---------- Menú lateral ----------
             var menu = new Panel { Dock = DockStyle.Left, Width = 230, BackColor = Tema.PrimarioOscuro };
             var marca = Tema.Etiqueta("$ EurekaBank", 16f, FontStyle.Bold, Color.White);
-            marca.Location = new Point(22, 24);
+            marca.Location = new Point(22, 18);
+            var monster = Tema.Etiqueta("M O N S T E R", 7.5f, FontStyle.Bold, Tema.Mike);
+            monster.Location = new Point(26, 48);
+            menu.Controls.Add(monster);
             var usuario = Tema.Etiqueta(_controlador.Empleado.Nombre + "\nEmpleado " + _controlador.Empleado.Codigo,
                 9.5f, FontStyle.Regular, Color.FromArgb(190, 212, 238));
-            usuario.Location = new Point(25, 62);
+            usuario.Location = new Point(25, 70);
             menu.Controls.Add(marca);
             menu.Controls.Add(usuario);
 
@@ -75,7 +78,17 @@ namespace ec.edu.monster.vista
 
             // ---------- Barra de estado ----------
             var estado = new StatusStrip { BackColor = Color.White, SizingGrip = false };
+            _lblServidor = new ToolStripStatusLabel("●  Comprobando servidor…") { ForeColor = Tema.TextoSuave, Font = Tema.Fuente(9f, FontStyle.Bold) };
+            _lblSesion = new ToolStripStatusLabel("") { ForeColor = Tema.TextoSuave, Spring = true, TextAlign = ContentAlignment.MiddleRight };
+            estado.Items.Add(_lblServidor);
             estado.Items.Add(new ToolStripStatusLabel("Conectado a: " + _controlador.UrlServidor) { ForeColor = Tema.TextoSuave });
+            estado.Items.Add(_lblSesion);
+
+            // Cada 10 s: ¿responde el servidor? y minutos que le quedan al token.
+            _reloj = new Timer { Interval = 10000 };
+            _reloj.Tick += async (s, e) => await ActualizarEstado();
+            Shown += async (s, e) => { _reloj.Start(); await ActualizarEstado(); };
+            FormClosed += (s, e) => _reloj.Stop();
 
             _contenido = new Panel { Dock = DockStyle.Fill, BackColor = Tema.Fondo };
 
@@ -87,6 +100,20 @@ namespace ec.edu.monster.vista
         }
 
         private readonly Dictionary<string, System.Func<Control>> _fabricas = new Dictionary<string, System.Func<Control>>();
+        private readonly ToolStripStatusLabel _lblServidor;
+        private readonly ToolStripStatusLabel _lblSesion;
+        private readonly Timer _reloj;
+
+        private async System.Threading.Tasks.Task ActualizarEstado()
+        {
+            bool activo = await _controlador.ServidorActivoAsync();
+            if (IsDisposed) return;
+            _lblServidor.Text = activo ? "●  Servidor activo · " + Formato.Host(_controlador.UrlServidor) : "●  Sin respuesta del servidor";
+            _lblServidor.ForeColor = activo ? Tema.Ingreso : Tema.Error;
+            int? minutos = _controlador.MinutosSesion;
+            _lblSesion.Text = minutos == null ? "" : "⏱ Sesión: " + minutos + " min";
+            _lblSesion.ForeColor = minutos != null && minutos <= 5 ? Tema.Error : Tema.TextoSuave;
+        }
 
         private void AgregarBotonMenu(Panel menu, string nombre, string icono, Color color, ref int y, System.Func<Control> crear)
         {

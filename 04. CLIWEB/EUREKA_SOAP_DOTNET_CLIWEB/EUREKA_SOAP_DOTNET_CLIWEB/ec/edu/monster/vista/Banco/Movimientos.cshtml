@@ -20,16 +20,46 @@
     @if (Model.Datos != null)
     {
         var c = Model.Datos;
-        <section class="tarjeta tarjeta-cuenta">
-            <div>
-                <h2>@c.Codigo · @c.Cliente</h2>
-                <p>Moneda: @c.Moneda · Sucursal: @c.Sucursal · Estado: @c.Estado · Creada: @c.FechaCreacion.ToString("dd/MM/yyyy")</p>
-            </div>
-            <div class="saldo">
-                <span>SALDO</span>
-                <strong>@Formato.Dinero(c.Saldo)</strong>
-            </div>
+        var barras = Formato.Barras(Model.Movimientos);
+        decimal maximo = barras.Count == 0 ? 1 : Math.Max(1, barras.Max(b => b.Total));
+
+        @* Tarjeta de la cuenta, como una tarjeta bancaria. *@
+        <section class="tarjeta-banco @(c.Estado == "ACTIVO" ? "" : "inactiva")">
+            <div class="tb-tipo">CUENTA DE AHORROS · @c.Moneda.ToUpperInvariant()</div>
+            <div class="tb-chip"></div>
+            <div class="tb-numero">@Formato.NumeroTarjeta(c.Codigo)</div>
+            <div class="tb-titular">TITULAR<strong>@c.Cliente.ToUpperInvariant()</strong></div>
+            <div class="tb-saldo">SALDO DISPONIBLE<strong>@Formato.Simbolo(c.Moneda) @Formato.Dinero(c.Saldo)</strong></div>
+            <div class="tb-pie">@c.Sucursal · @c.Estado · desde @c.FechaCreacion.ToString("MM/yyyy") · <b>MONSTER · EUREKA BANK</b></div>
         </section>
+
+        @if (Model.Movimientos.Count > 0)
+        {
+            <div class="graficos">
+                <section class="tarjeta grafico">
+                    <h3>Total por tipo de movimiento</h3>
+                    <div class="barras">
+                        @foreach (var b in barras)
+                        {
+                            <div class="barra-col">
+                                <span class="barra-valor">@Formato.Dinero(b.Total)</span>
+                                <div class="barra-relleno" style="height:@((int)(b.Total / maximo * 100))%; background:@b.Color"></div>
+                                <span class="barra-nombre">@b.Tipo</span>
+                            </div>
+                        }
+                    </div>
+                </section>
+                <section class="tarjeta grafico">
+                    <h3>Evolución del saldo <small>(últimos @Math.Min(15, Model.Movimientos.Count) movimientos)</small></h3>
+                    @{ string puntos = Formato.PuntosSaldo(c.Saldo, Model.Movimientos, 320, 150); }
+                    <svg class="linea-saldo" viewBox="0 0 320 150" preserveAspectRatio="none">
+                        <polygon points="6,150 @puntos 314,150" class="area" />
+                        <polyline points="@puntos" class="trazo" />
+                    </svg>
+                    <div class="eje"><span>antes</span><span>hoy: @Formato.Dinero(c.Saldo)</span></div>
+                </section>
+            </div>
+        }
 
         <div class="tabla-contenedor">
             <table class="tabla">

@@ -38,6 +38,7 @@ public class BancoController : Controller
         {
             modelo.Datos = await _cliente.ConsultarCuentaAsync(Token, modelo.Cuenta!);
             modelo.Movimientos = await _cliente.TraerMovimientosAsync(Token, modelo.Cuenta!);
+            AnotarActividad();
         }
         catch (ErrorServicioException ex)
         {
@@ -92,6 +93,8 @@ public class BancoController : Controller
                 _ => await _cliente.RegistrarTransferenciaAsync(Token, cuenta, modelo.CuentaDestino ?? "", importe, empleado)
             };
 
+            AnotarActividad();
+            modelo.Comprobante = await ArmarComprobanteAsync(modelo, importe, saldo, empleado);
             modelo.Exito = $"{titulo} registrad{(esTransferencia ? "a" : "o")}";
             modelo.Detalle = esTransferencia
                 ? $"{Formato.Dinero(importe)} de {modelo.Cuenta} a {modelo.CuentaDestino}. Nuevo saldo de {modelo.Cuenta}: {Formato.Dinero(saldo)}"
@@ -110,6 +113,39 @@ public class BancoController : Controller
         }
         return View("Operacion", modelo);
     }
+
+    /// <summary>
+    /// Datos del recibo. El número de movimiento, el titular y la moneda se piden al servidor con consultarCuenta
+    /// (el movimiento recién grabado es el último de la cuenta); si esa consulta falla, el recibo sale sin ellos.
+    /// </summary>
+    private async Task<Comprobante> ArmarComprobanteAsync(OperacionViewModel modelo, decimal importe, decimal saldo, string empleado)
+    {
+        var recibo = new Comprobante
+        {
+            Tipo = modelo.Tipo,
+            Cuenta = modelo.Cuenta ?? "",
+            CuentaDestino = modelo.CuentaDestino,
+            Importe = importe,
+            NuevoSaldo = saldo,
+            Fecha = DateTime.Now,
+            Empleado = $"{empleado} · {HttpContext.Session.GetString(RequiereSesionAttribute.ClaveNombre)}"
+        };
+        try
+        {
+            Cuenta cuenta = await _cliente.ConsultarCuentaAsync(Token, recibo.Cuenta);
+            recibo.NumeroMovimiento = cuenta.NumeroMovimientos;
+            recibo.Cliente = cuenta.Cliente;
+            recibo.Moneda = cuenta.Moneda;
+        }
+        catch (ErrorServicioException)
+        {
+            // El recibo igual muestra importe y saldo.
+        }
+        return recibo;
+    }
+
+    private void AnotarActividad() =>
+        HttpContext.Session.SetString(RequiereSesionAttribute.ClaveActividad, DateTime.Now.Ticks.ToString());
 
     /// <summary>Token de la sesión (lo pone AccesoController al iniciar sesión).</summary>
     private string Token => HttpContext.Session.GetString(RequiereSesionAttribute.ClaveToken) ?? "";

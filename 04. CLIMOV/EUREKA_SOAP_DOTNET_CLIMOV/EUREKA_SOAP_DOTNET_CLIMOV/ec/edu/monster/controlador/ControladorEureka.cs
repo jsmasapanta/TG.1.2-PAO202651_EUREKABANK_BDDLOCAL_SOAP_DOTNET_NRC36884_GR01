@@ -29,13 +29,35 @@ public sealed class ControladorEureka
 
     public Empleado? Empleado { get; private set; }
 
-    public string UrlServidor
+    public string UrlServidor => _cliente.Url;
+
+    public string HostServidor => Uri.TryCreate(UrlServidor, UriKind.Absolute, out Uri? u) ? u.Host : "";
+
+    public string PuertoServidor => Uri.TryCreate(UrlServidor, UriKind.Absolute, out Uri? u) ? u.Port.ToString() : "";
+
+    /// <summary>
+    /// Cambia el servidor (la IP de la PC con IIS varía según la red). Valida host y puerto
+    /// (InvalidOperationException si no sirven) y lo guarda en el teléfono.
+    /// </summary>
+    public void CambiarServidor(string host, string puerto)
     {
-        get => _cliente.Url;
-        set => _cliente.Url = value;
+        _cliente.Url = ConfiguracionServidor.ArmarUrl(host, puerto, "WSEureka.svc");
+        Empleado = null;
+    }
+
+    public void RestablecerServidor()
+    {
+        _cliente.RestablecerServidor();
+        Empleado = null;
     }
 
     public IReadOnlyList<string> OperacionesSesion => _operacionesSesion;
+
+    /// <summary>Minutos que le quedan al token de la sesión (null si no hay sesión).</summary>
+    public int? MinutosSesion => _cliente.MinutosSesion;
+
+    /// <summary>Para el indicador "Servidor activo".</summary>
+    public Task<bool> ServidorActivoAsync() => _cliente.ServidorActivoAsync();
 
     public async Task<Empleado> IniciarSesionAsync(string usuario, string clave)
     {

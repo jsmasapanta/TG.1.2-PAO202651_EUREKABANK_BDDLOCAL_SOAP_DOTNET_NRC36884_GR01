@@ -14,9 +14,8 @@ namespace ec.edu.monster.vista
         private readonly TextBox _txtCuenta;
         private readonly Button _btnConsultar;
         private readonly Label _lblMensaje;
-        private readonly Label _lblCliente;
-        private readonly Label _lblDetalle;
-        private readonly Label _lblSaldo;
+        private readonly TarjetaCuenta _tarjeta;
+        private readonly GraficoCuenta _grafico;
         private readonly DataGridView _tabla;
 
         public PanelMovimientos(ControladorEureka controlador)
@@ -49,28 +48,14 @@ namespace ec.edu.monster.vista
 
             _lblMensaje = new Label { Location = new Point(400, 122), Size = new Size(430, 24), ForeColor = Tema.Error, Font = Tema.Fuente(9.5f) };
 
-            // Tarjeta con los datos de la cuenta
-            var tarjeta = new Panel { Location = new Point(32, 162), Size = new Size(800, 86), BackColor = Tema.Tarjeta, BorderStyle = BorderStyle.FixedSingle };
-            _lblCliente = Tema.Etiqueta("—", 12f, FontStyle.Bold);
-            _lblCliente.Location = new Point(16, 14);
-            _lblDetalle = Tema.Etiqueta("", 9.5f, FontStyle.Regular, Tema.TextoSuave);
-            _lblDetalle.Location = new Point(18, 48);
-            var lblSaldoTitulo = Tema.Etiqueta("SALDO", 9f, FontStyle.Bold, Tema.TextoSuave);
-            lblSaldoTitulo.Location = new Point(560, 12);
-            _lblSaldo = new Label
-            {
-                Location = new Point(500, 32),
-                Size = new Size(280, 40),
-                TextAlign = ContentAlignment.MiddleRight,
-                Font = Tema.Fuente(20f, FontStyle.Bold),
-                ForeColor = Tema.Primario
-            };
-            tarjeta.Controls.AddRange(new Control[] { _lblCliente, _lblDetalle, lblSaldoTitulo, _lblSaldo });
+            // La cuenta como tarjeta bancaria y, al lado, los gráficos de sus movimientos.
+            _tarjeta = new TarjetaCuenta { Location = new Point(32, 158), Size = new Size(390, 176) };
+            _grafico = new GraficoCuenta { Location = new Point(436, 158), Size = new Size(396, 176) };
 
             _tabla = new DataGridView
             {
-                Location = new Point(32, 262),
-                Size = new Size(800, 300),
+                Location = new Point(32, 346),
+                Size = new Size(800, 220),
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
@@ -98,7 +83,7 @@ namespace ec.edu.monster.vista
             _tabla.Columns["Tipo"].FillWeight = 120;
             _tabla.Columns["Importe"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
-            Controls.AddRange(new Control[] { titulo, ayuda, lblCuenta, _txtCuenta, _btnConsultar, _lblMensaje, tarjeta, _tabla });
+            Controls.AddRange(new Control[] { titulo, ayuda, lblCuenta, _txtCuenta, _btnConsultar, _lblMensaje, _tarjeta, _grafico, _tabla });
         }
 
         private async void Consultar()
@@ -112,7 +97,8 @@ namespace ec.edu.monster.vista
             {
                 Cuenta datos = await _controlador.ConsultarCuentaAsync(cuenta);
                 Movimiento[] movimientos = await _controlador.TraerMovimientosAsync(cuenta);
-                MostrarCuenta(datos);
+                _tarjeta.Mostrar(datos);
+                _grafico.Mostrar(datos, movimientos);
                 MostrarMovimientos(movimientos);
             }
             catch (ErrorServicioException ex)
@@ -125,13 +111,6 @@ namespace ec.edu.monster.vista
                 _btnConsultar.Enabled = true;
                 UseWaitCursor = false;
             }
-        }
-
-        private void MostrarCuenta(Cuenta c)
-        {
-            _lblCliente.Text = $"{c.Codigo} · {c.Cliente}";
-            _lblDetalle.Text = $"Moneda: {c.Moneda}   ·   Sucursal: {c.Sucursal}   ·   Estado: {c.Estado}   ·   Creada: {c.FechaCreacion:dd/MM/yyyy}";
-            _lblSaldo.Text = Formato.Dinero(c.Saldo);
         }
 
         private void MostrarMovimientos(Movimiento[] movimientos)
@@ -151,9 +130,8 @@ namespace ec.edu.monster.vista
 
         private void Limpiar()
         {
-            _lblCliente.Text = "—";
-            _lblDetalle.Text = string.Empty;
-            _lblSaldo.Text = string.Empty;
+            _tarjeta.Mostrar(null);
+            _grafico.Mostrar(null, null);
             _tabla.Rows.Clear();
         }
 

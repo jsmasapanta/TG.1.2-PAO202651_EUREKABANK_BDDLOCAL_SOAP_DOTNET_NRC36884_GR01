@@ -18,6 +18,12 @@ namespace ec.edu.monster.vista
         public static readonly Color Ingreso = Color.FromArgb(25, 135, 84);
         public static readonly Color Salida = Color.FromArgb(192, 57, 43);
         public static readonly Color Consulta = Color.FromArgb(13, 110, 253);
+        public static readonly Color Transferencia = Color.FromArgb(111, 66, 193);
+
+        // Paleta Monsters Inc.: Sulley (azul), Mike (verde), Boo (morado).
+        public static readonly Color Sulley = Color.FromArgb(41, 168, 224);
+        public static readonly Color Mike = Color.FromArgb(122, 201, 67);
+        public static readonly Color Boo = Color.FromArgb(160, 92, 200);
 
         public static Font Fuente(float tamano, FontStyle estilo = FontStyle.Regular)
         {
@@ -30,7 +36,7 @@ namespace ec.edu.monster.vista
             {
                 case TipoOperacion.Deposito: return Ingreso;
                 case TipoOperacion.Retiro: return Salida;
-                default: return Color.FromArgb(111, 66, 193);
+                default: return Transferencia;
             }
         }
 

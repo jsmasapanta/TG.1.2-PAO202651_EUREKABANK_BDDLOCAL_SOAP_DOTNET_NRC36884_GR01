@@ -25,6 +25,11 @@ namespace ec.edu.monster
                 return;
             }
 
+            using (var bienvenida = new FormBienvenida())
+            {
+                bienvenida.ShowDialog();
+            }
+
             // Login → Principal. "Cerrar sesión" vuelve al login; cerrar la ventana termina la aplicación.
             while (true)
             {

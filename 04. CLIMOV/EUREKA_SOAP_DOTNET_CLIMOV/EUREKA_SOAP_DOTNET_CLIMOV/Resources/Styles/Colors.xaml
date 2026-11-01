@@ -13,6 +13,12 @@
     <Color x:Key="TextoSuave">#6C757D</Color>
     <Color x:Key="Borde">#DEE2E6</Color>
     <Color x:Key="Error">#C0392B</Color>
+    <!-- Fondo de las tarjetas (blanco; en modo oscuro lo cambia vista/Tema.cs) -->
+    <Color x:Key="Tarjeta">#FFFFFF</Color>
+    <!-- Paleta Monsters Inc.: Sulley, Mike y Boo -->
+    <Color x:Key="Sulley">#29A8E0</Color>
+    <Color x:Key="Mike">#7AC943</Color>
+    <Color x:Key="Boo">#A05CC8</Color>
     <Color x:Key="PrimaryDark">#5B9BD5</Color>
     <Color x:Key="PrimaryDarkText">#242424</Color>
     <Color x:Key="Secondary">#D6E6F5</Color>

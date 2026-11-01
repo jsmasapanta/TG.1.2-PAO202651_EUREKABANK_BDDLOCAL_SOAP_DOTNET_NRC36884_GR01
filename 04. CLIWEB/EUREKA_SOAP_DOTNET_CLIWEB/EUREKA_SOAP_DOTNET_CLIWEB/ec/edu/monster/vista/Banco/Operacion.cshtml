@@ -72,6 +72,44 @@
     </div>
 </div>
 
+@if (Model.Comprobante != null)
+{
+    var r = Model.Comprobante;
+    bool salida = r.Tipo != TipoOperacion.Deposito;
+    <div class="velo" id="comprobante">
+        <section class="comprobante tema-@r.Tipo.ToString().ToLowerInvariant()">
+            <header>
+                <div class="comp-ok">✓</div>
+                <strong>@Formato.Titulo(r.Tipo) registrad@(r.Tipo == TipoOperacion.Transferencia ? "a" : "o")</strong>
+                <span>MONSTER · EUREKA BANK</span>
+            </header>
+            <div class="comp-monto">
+                <span>IMPORTE</span>
+                <strong>@(salida ? "−" : "+") @Formato.Simbolo(r.Moneda) @Formato.Dinero(r.Importe)</strong>
+            </div>
+            <div class="comp-sello">APROBADO</div>
+            <dl>
+                @if (r.NumeroMovimiento > 0)
+                {
+                    <dt>Movimiento N.º</dt><dd>@r.NumeroMovimiento</dd>
+                }
+                <dt>@(r.CuentaDestino != null ? "Cuenta de origen" : "Cuenta")</dt><dd>@Formato.NumeroTarjeta(r.Cuenta)@(string.IsNullOrEmpty(r.Cliente) ? "" : " · " + r.Cliente)</dd>
+                @if (r.CuentaDestino != null)
+                {
+                    <dt>Cuenta de destino</dt><dd>@Formato.NumeroTarjeta(r.CuentaDestino)</dd>
+                }
+                <dt>Fecha y hora</dt><dd>@r.Fecha.ToString("dd/MM/yyyy · HH:mm:ss")</dd>
+                <dt>Empleado</dt><dd>@r.Empleado</dd>
+                <dt>Nuevo saldo</dt><dd class="comp-saldo">@Formato.Simbolo(r.Moneda) @Formato.Dinero(r.NuevoSaldo)</dd>
+            </dl>
+            <footer>
+                <button type="button" class="boton comp-imprimir" onclick="window.print()">🖨 Imprimir / PDF</button>
+                <button type="button" class="boton boton-color" onclick="document.getElementById('comprobante').remove()">Nueva operación</button>
+            </footer>
+        </section>
+    </div>
+}
+
 @section Scripts {
     <script>
         const operacion = '@Formato.Titulo(Model.Tipo).ToLowerInvariant()';

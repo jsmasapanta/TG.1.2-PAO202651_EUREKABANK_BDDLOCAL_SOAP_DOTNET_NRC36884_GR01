@@ -13,6 +13,12 @@
     --retiro: #c0392b;
     --transferencia: #6f42c1;
     --color: var(--primario);
+    /* Paleta Monsters Inc.: Sulley (azul), Mike (verde), Boo (morado). */
+    --sulley: #29a8e0;
+    --mike: #7ac943;
+    --boo: #a05cc8;
+    --campo: #ffffff;
+    --fila: #f1f3f5;
 }
 
 * { box-sizing: border-box; }
@@ -32,7 +38,8 @@ input, select {
     padding: 9px 11px;
     border: 1px solid var(--borde);
     border-radius: 6px;
-    background: #fff;
+    background: var(--campo);
+    color: var(--texto);
 }
 
 input:focus, select:focus {
@@ -103,7 +110,7 @@ label {
 .campo-clave { display: flex; gap: 8px; }
 .ver-clave {
     border: 1px solid var(--borde);
-    background: #fff;
+    background: var(--campo);
     border-radius: 6px;
     padding: 0 14px;
     cursor: pointer;
@@ -199,7 +206,7 @@ label {
 .tabla {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
+    background: var(--tarjeta);
     border: 1px solid var(--borde);
     font-size: 14px;
 }
@@ -209,8 +216,8 @@ label {
     text-align: left;
     padding: 9px 10px;
 }
-.tabla td { padding: 8px 10px; border-top: 1px solid #f1f3f5; white-space: nowrap; }
-.tabla tbody tr:hover { background: #f6f9fc; }
+.tabla td { padding: 8px 10px; border-top: 1px solid var(--fila); white-space: nowrap; }
+.tabla tbody tr:hover { background: var(--fila); }
 .derecha { text-align: right !important; }
 .ingreso { color: var(--deposito); font-weight: 600; }
 .salida { color: var(--retiro); font-weight: 600; }
@@ -230,7 +237,7 @@ hr { border: 0; border-top: 1px solid var(--borde); margin: 24px 0 16px; }
     list-style: none;
     margin: 0;
     padding: 6px 10px;
-    background: #fff;
+    background: var(--tarjeta);
     border: 1px solid var(--borde);
     border-radius: 6px;
     min-height: 260px;
@@ -245,6 +252,127 @@ hr { border: 0; border-top: 1px solid var(--borde); margin: 24px 0 16px; }
     color: var(--texto-suave);
     font-size: 13px;
 }
+
+/* ---------- Marca, estado del servidor y modo oscuro ---------- */
+.marca small { display: block; font-size: 11px; letter-spacing: 3px; color: var(--mike); }
+.menu { background: linear-gradient(180deg, var(--primario-oscuro), #0a2240); }
+.barra-estado { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: -12px 0 10px; flex-wrap: wrap; }
+.estado-srv { display: inline-flex; align-items: center; gap: 7px; background: #e9f7ef; border: 1px solid #b7e4c7; color: #146c43;
+              font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; }
+.estado-srv .punto { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+.estado-srv.caido { background: #fdecea; border-color: #f5c2c0; color: #a12622; }
+.estado-srv.caido .punto { background: var(--error); box-shadow: 0 0 0 3px rgba(192,57,43,.25); }
+.sesion-restante { font-size: 12px; font-weight: 700; color: var(--texto-suave); }
+.sesion-restante.por-vencer { color: var(--error); }
+.boton-tema { margin: 14px 20px 0; background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff;
+              border-radius: 6px; padding: 7px; cursor: pointer; font-weight: 600; }
+.boton-tema.en-login { width: 100%; margin: 10px 0 0; color: var(--texto-suave); border-color: var(--borde); }
+
+/* ---------- Login: foto con leyenda, error y caritas de intentos ---------- */
+.login { background: radial-gradient(600px 360px at 12% 8%, rgba(41,168,224,.35), transparent 70%),
+                     radial-gradient(500px 360px at 92% 92%, rgba(160,92,200,.3), transparent 70%),
+                     linear-gradient(135deg, var(--primario), var(--primario-oscuro)); }
+.login-tarjeta { border-radius: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.login-foto { position: relative; }
+.login-leyenda { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 20px; color: #fff;
+                 background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+.login-leyenda strong { display: block; font-size: 22px; }
+.login-leyenda span { font-size: 13px; opacity: .85; }
+.campo-error { border-color: var(--error); background: #fff5f5; }
+.caja-error { background: #fdecea; color: #a12622; border-radius: 8px; padding: 9px 12px; text-align: left; font-weight: 600; font-size: 14px; }
+.intentos { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--texto-suave); font-size: 13px; flex-wrap: wrap; }
+.intentos .estado-srv { margin-left: auto; }
+.carita { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; }
+.carita.viva { background: #e8f6dc; border: 2px solid var(--mike); }
+.carita.apagada { background: #eee; border: 2px solid #ccc; filter: grayscale(1); opacity: .45; }
+
+/* ---------- Cambiar servidor (login) ---------- */
+.cambiar-servidor { margin: 0 32px 24px; font-size: 13px; color: var(--texto-suave); }
+.cambiar-servidor summary { cursor: pointer; }
+.fila-servidor { display: flex; gap: 8px; margin-top: 10px; }
+.fila-servidor .puerto { max-width: 90px; }
+.fila-servidor .guardar { width: auto; margin: 0; padding: 8px 14px; }
+.mensaje-ok { color: var(--deposito); font-weight: 600; margin: 10px 0 0; }
+
+/* ---------- Tarjeta bancaria de la cuenta ---------- */
+.tarjeta-banco { position: relative; min-height: 190px; margin: 22px 0 16px; padding: 20px 24px; border-radius: 18px; color: #fff; overflow: hidden;
+                 background: radial-gradient(300px 180px at 92% 0%, rgba(41,168,224,.55), transparent 70%), linear-gradient(135deg, #0b4f8a, #082e54 70%);
+                 box-shadow: 0 10px 24px rgba(8,46,84,.35); max-width: 760px; }
+.tarjeta-banco::after { content: ""; position: absolute; right: -40px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%; background: rgba(122,201,67,.18); }
+.tarjeta-banco.inactiva { filter: grayscale(.85); }
+.tb-tipo { font-size: 12px; opacity: .85; letter-spacing: .5px; }
+.tb-chip { width: 44px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #f5d77a, #c9a227); margin: 12px 0 14px; }
+.tb-numero { font-family: Consolas, monospace; font-size: 26px; letter-spacing: 4px; }
+.tb-titular { font-size: 11px; opacity: .8; margin-top: 10px; }
+.tb-titular strong { display: block; font-size: 16px; opacity: 1; letter-spacing: .5px; }
+.tb-saldo { position: absolute; top: 20px; right: 24px; text-align: right; font-size: 11px; opacity: .9; }
+.tb-saldo strong { display: block; font-size: 32px; opacity: 1; }
+.tb-pie { position: relative; z-index: 1; margin-top: 12px; font-size: 11px; opacity: .8; }
+
+/* ---------- Gráficos ---------- */
+.graficos { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px; max-width: 980px; }
+.grafico { padding: 12px 18px 28px; }
+.grafico h3 { margin: 0 0 10px; font-size: 14px; }
+.grafico h3 small { color: var(--texto-suave); font-weight: 400; }
+.barras { display: flex; align-items: flex-end; gap: 14px; height: 170px; border-bottom: 1px solid var(--borde); }
+.barra-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; position: relative; }
+.barra-relleno { width: 100%; min-height: 3px; border-radius: 6px 6px 0 0; }
+.barra-valor { font-size: 11px; font-weight: 700; color: var(--texto-suave); }
+.barra-nombre { position: absolute; bottom: -20px; font-size: 11px; color: var(--texto-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.linea-saldo { width: 100%; height: 160px; display: block; }
+.linea-saldo .area { fill: rgba(41,168,224,.22); }
+.linea-saldo .trazo { fill: none; stroke: var(--primario); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.eje { display: flex; justify-content: space-between; font-size: 11px; color: var(--texto-suave); }
+
+/* ---------- Comprobante ---------- */
+.velo { position: fixed; inset: 0; background: rgba(8,46,84,.55); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.comprobante { width: 100%; max-width: 380px; background: var(--tarjeta); border-radius: 16px; overflow: hidden; position: relative;
+               box-shadow: 0 20px 50px rgba(0,0,0,.35); animation: aparecer .35s ease-out; }
+@keyframes aparecer { from { transform: translateY(16px) scale(.97); opacity: 0; } }
+.comprobante header { background: var(--color); color: #fff; text-align: center; padding: 18px 16px 28px; }
+.comprobante header strong { display: block; font-size: 19px; }
+.comprobante header span { font-size: 12px; opacity: .85; letter-spacing: 1px; }
+.comp-ok { width: 54px; height: 54px; border-radius: 50%; background: #fff; color: var(--color); font-size: 30px; font-weight: 900; display: grid; place-items: center; margin: 0 auto 8px; }
+.comp-monto { margin: -18px auto 0; width: 230px; background: var(--tarjeta); border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.12); text-align: center; padding: 10px; position: relative; }
+.comp-monto span { font-size: 11px; color: var(--texto-suave); }
+.comp-monto strong { display: block; font-size: 26px; color: var(--color); }
+.comp-sello { position: absolute; right: 16px; top: 168px; transform: rotate(-14deg); border: 3px solid var(--deposito); color: var(--deposito);
+              font-weight: 900; font-size: 13px; padding: 2px 8px; border-radius: 6px; opacity: .75; letter-spacing: 1px; }
+.comprobante dl { display: grid; grid-template-columns: auto 1fr; margin: 14px 22px 0; font-size: 14px; }
+.comprobante dt { color: var(--texto-suave); padding: 7px 0; border-bottom: 1px dashed var(--borde); }
+.comprobante dd { margin: 0; text-align: right; font-weight: 700; padding: 7px 0; border-bottom: 1px dashed var(--borde); }
+.comprobante dd.comp-saldo { font-size: 17px; border: 0; }
+.comprobante dt:last-of-type { border: 0; }
+.comprobante footer { display: flex; gap: 10px; padding: 16px 22px 20px; }
+.comprobante footer .boton { flex: 1; }
+.comp-imprimir { background: var(--fondo); color: var(--primario); }
+@media print {
+    body * { visibility: hidden; }
+    .comprobante, .comprobante * { visibility: visible; }
+    .comprobante { position: absolute; left: 0; top: 0; box-shadow: none; }
+    .comprobante footer { display: none; }
+}
+
+/* ---------- Modo oscuro ---------- */
+[data-tema="oscuro"] {
+    --fondo: #0b1426;
+    --tarjeta: #13213b;
+    --texto: #e8eefb;
+    --texto-suave: #8fa3c7;
+    --borde: #24395f;
+    --campo: #0e1a30;
+    --fila: #1a2b4b;
+    --primario: #3d8bfd;
+}
+[data-tema="oscuro"] .menu { background: linear-gradient(180deg, #0e1a30, #070e1b); }
+[data-tema="oscuro"] .tabla th { background: #1a2b4b; }
+[data-tema="oscuro"] .tarjeta-banco { background: radial-gradient(300px 180px at 92% 0%, rgba(160,92,200,.55), transparent 70%), linear-gradient(135deg, #1a2b4b, #0b1426 70%); }
+[data-tema="oscuro"] .login-encabezado { background: #1a2b4b; }
+[data-tema="oscuro"] .estado-srv { background: #0f2d1e; border-color: #1d5c3a; color: #4ade80; }
+[data-tema="oscuro"] .estado-srv.caido { background: #3a1216; border-color: #6b1f27; color: #fb7185; }
+[data-tema="oscuro"] .caja-error, [data-tema="oscuro"] .campo-error { background: #3a1216; color: #fecaca; }
+[data-tema="oscuro"] .ingreso { color: #4ade80; }
+[data-tema="oscuro"] .salida { color: #fb7185; }
 
 /* ---------- Pantallas pequeñas (celular) ---------- */
 @media (max-width: 800px) {
@@ -264,4 +392,8 @@ hr { border: 0; border-top: 1px solid var(--borde); margin: 24px 0 16px; }
     .fila-consulta { flex-direction: column; }
     .tarjeta-cuenta { flex-direction: column; align-items: flex-start; }
     .saldo { text-align: left; }
+    .graficos { grid-template-columns: 1fr; }
+    .tb-saldo { position: static; text-align: left; margin-top: 10px; }
+    .tb-numero { font-size: 21px; }
+    .barra-estado { justify-content: flex-start; margin-top: 0; }
 }

@@ -14,7 +14,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] · EurekaBank</title>
+    <title>@ViewData["Title"] · EurekaBank Monster</title>
+    @* El modo oscuro se aplica antes de pintar la página para que no parpadee. *@
+    <script>try { if (localStorage.getItem('tema') === 'oscuro') document.documentElement.dataset.tema = 'oscuro'; } catch (e) { }</script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -26,7 +28,7 @@
     {
         <div class="app">
             <aside class="menu">
-                <div class="marca">$ EurekaBank</div>
+                <div class="marca">$ EurekaBank <small>MONSTER</small></div>
                 <div class="usuario">@ViewData["Nombre"]<br />Empleado @ViewData["Empleado"]</div>
                 <nav>
                     @foreach (var item in menu)
@@ -38,16 +40,22 @@
                     }
                 </nav>
                 <img class="menu-imagen" src="~/img/monster.jpg" alt="Monsters Inc." asp-append-version="true" />
+                <button type="button" class="boton-tema" onclick="cambiarTema()">🌙 Modo oscuro</button>
                 <form asp-controller="Acceso" asp-action="Logout" method="post" class="salir">
                     <button type="submit" class="boton boton-salir">Cerrar sesión</button>
                 </form>
             </aside>
             <main class="contenido">
+                <div class="barra-estado">
+                    <span class="estado-srv" data-estado-servidor><span class="punto"></span><span class="texto">Comprobando servidor…</span></span>
+                    <span class="sesion-restante" data-sesion-restante></span>
+                </div>
                 @RenderBody()
                 <div class="estado">Conectado a: @ViewData["Servidor"]</div>
             </main>
         </div>
     }
+    <script src="~/js/estado.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

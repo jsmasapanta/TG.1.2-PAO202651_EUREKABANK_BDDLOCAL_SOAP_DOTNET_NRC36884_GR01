@@ -2,33 +2,33 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ec.edu.monster.vista.OperacionPage"
-             BackgroundColor="{StaticResource Fondo}">
+             BackgroundColor="{DynamicResource Fondo}">
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="12">
 
-            <Label x:Name="LblAyuda" FontSize="14" TextColor="{StaticResource TextoSuave}" />
+            <Label x:Name="LblAyuda" FontSize="14" TextColor="{DynamicResource TextoSuave}" />
 
-            <Border Padding="16" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 14">
+            <Border Padding="16" BackgroundColor="{DynamicResource Tarjeta}" StrokeThickness="0" StrokeShape="RoundRectangle 14">
                 <VerticalStackLayout Spacing="8">
-                    <Label x:Name="LblCuenta" Text="Cuenta" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+                    <Label x:Name="LblCuenta" Text="Cuenta" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
                     <Entry x:Name="TxtCuenta" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00100001" ReturnType="Next" />
 
-                    <Label x:Name="LblDestino" Text="Cuenta de destino" FontAttributes="Bold" TextColor="{StaticResource Texto}" IsVisible="False" />
+                    <Label x:Name="LblDestino" Text="Cuenta de destino" FontAttributes="Bold" TextColor="{DynamicResource Texto}" IsVisible="False" />
                     <Entry x:Name="TxtDestino" Keyboard="Numeric" MaxLength="8" Placeholder="Ej.: 00200001" ReturnType="Next" IsVisible="False" />
 
-                    <Label Text="Importe" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+                    <Label Text="Importe" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
                     <Entry x:Name="TxtImporte" Keyboard="Numeric" Placeholder="Ej.: 150 o 75,50" ReturnType="Go"
                            Completed="OnRegistrarClicked" />
 
                     <Button x:Name="BtnRegistrar" Clicked="OnRegistrarClicked"
-                            TextColor="White" FontAttributes="Bold" HeightRequest="50" Margin="0,6,0,0" />
+                            TextColor="White" FontAttributes="Bold" HeightRequest="50" CornerRadius="10" Margin="0,6,0,0" />
                     <ActivityIndicator x:Name="Cargando" IsRunning="False" IsVisible="False" />
 
-                    <BoxView HeightRequest="1" Color="{StaticResource Borde}" Margin="0,6" />
+                    <BoxView HeightRequest="1" Color="{DynamicResource Borde}" Margin="0,6" />
                     <Label x:Name="LblResultado" Text="—" FontSize="22" FontAttributes="Bold"
                            HorizontalTextAlignment="Center" TextColor="{StaticResource Borde}" />
-                    <Label x:Name="LblDetalle" FontSize="14" TextColor="{StaticResource TextoSuave}"
+                    <Label x:Name="LblDetalle" FontSize="14" TextColor="{DynamicResource TextoSuave}"
                            HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Border>

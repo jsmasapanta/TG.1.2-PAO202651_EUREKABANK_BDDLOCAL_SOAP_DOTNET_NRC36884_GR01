@@ -12,10 +12,10 @@ Operaciones: **consultar cuenta y movimientos, depósito, retiro y transferencia
 | **Usuario de la app** | `monster` / `monster69` (tabla `Empleado`, código `0012`) |
 | **Login de SQL Server** | `monster` / `monster` (lo usa el servidor para conectarse) |
 | **Base de datos** | `EUREKABANK` en SQL Server local (`localhost`) |
-| **Panel del servidor** | `http://localhost:8087/` (estado, sesiones, peticiones por cliente y prueba rápida) |
-| **Servidor SOAP** | `http://localhost:8087/WSEureka.svc` (WSDL: `?wsdl`) |
-| **Página ASMX** | `http://localhost:8087/WSEureka.asmx` (las mismas 8 operaciones) |
-| **Cliente web** | `http://localhost:5087` |
+| **Panel del servidor** | `http://IP-DE-LA-PC:8087/` en IIS (estado, sesiones, peticiones por cliente y prueba rápida) |
+| **Servidor SOAP** | `http://IP-DE-LA-PC:8087/WSEureka.svc` en IIS (WSDL: `?wsdl`) · por defecto `192.168.100.2` |
+| **Página ASMX** | `http://IP-DE-LA-PC:8087/WSEureka.asmx` (las mismas 8 operaciones) |
+| **Cliente web** | `http://IP-DE-LA-PC:5087` |
 | **IDE** | Visual Studio 2022 Community |
 | **Paquetes** | `ec.edu.monster.db` · `modelo` · `servicio` · `ws` (servidor) y `modelo` · `vista` · `controlador` · `servicio` (clientes) |
 | **Sesión** | Token de 30 minutos en el header SOAP `<Token>`; `cerrarSesion` lo invalida |
@@ -208,7 +208,7 @@ Abre `EUREKA_SOAP_DOTNET_CLIWEB.sln` → perfil **EUREKA_SOAP_DOTNET_CLIWEB** �
 
 Igual que en el TI.1.2: celular con **Depuración USB**, abrir `EUREKA_SOAP_DOTNET_CLIMOV.sln`, elegir el celular y **Iniciar sin depurar**. En la pantalla de login, cuadro **Servidor SOAP**:
 
-- Por cable: `adb reverse tcp:8087 tcp:8087` y `http://localhost:8087/WSEureka.svc`
+- Por cable (solo si no hay Wi-Fi común): `adb reverse tcp:8087 tcp:8087`
 - Por WiFi: `http://IP-DE-LA-PC:8087/WSEureka.svc` (servidor publicado en IIS, Paso 6)
 - Emulador: `http://10.0.2.2:8087/WSEureka.svc`
 
@@ -216,14 +216,33 @@ Igual que en el TI.1.2: celular con **Depuración USB**, abrir `EUREKA_SOAP_DOTN
 
 ## Configuración del servidor en cada cliente
 
-Ningún cliente tiene la dirección fija en el código; si el host o el puerto no son válidos muestran un mensaje claro.
+El servidor corre en **IIS** y los clientes lo buscan por la **IP de la PC** (no `localhost`): por defecto `192.168.100.2:8087`.
+Como la IP cambia según la red (casa, aula, guardia), **cada cliente la puede cambiar desde su propia pantalla**, sin tocar archivos ni recompilar. Ningún cliente tiene la dirección fija en el código; si el host o el puerto no son válidos muestran un mensaje claro.
 
-| Cliente | Dónde | Envía `X-Cliente` |
-|---|---|---|
-| Consola | `App.config` → `SoapHost`, `SoapPuerto`, `SoapRuta` (o variables `SOAP_HOST`, `SOAP_PORT`) | `CONSOLA` |
-| Escritorio | `App.config` → `SoapHost`, `SoapPuerto`, `SoapRuta` (o variables `SOAP_HOST`, `SOAP_PORT`) | `ESCRITORIO` |
-| Web | `appsettings.json` → `ServidorSoap:Host`, `Puerto`, `Ruta` | `WEB` |
-| Móvil | `appsettings.json` incrustado (`EmbeddedResource`): al cambiar la IP se **recompila** e instala | `MOVIL` (`ESCRITORIO` si corre en Windows) |
+| Cliente | Cambiar desde la pantalla | Valor por defecto | Envía `X-Cliente` |
+|---|---|---|---|
+| Consola | En el login escribir **S** → IP y puerto (se guardan en el `.exe.config`) | `App.config` → `SoapHost`, `SoapPuerto` (o variables `SOAP_HOST`, `SOAP_PORT`) | `CONSOLA` |
+| Escritorio | Login → fila **Servidor** `[IP] : [puerto]` → **Cambiar** (se guarda en el `.exe.config`) | `App.config` → `SoapHost`, `SoapPuerto` | `ESCRITORIO` |
+| Web | Login → **⚙ Servidor · cambiar** → **Guardar** (se guarda en `appsettings.json`) | `appsettings.json` → `ServidorSoap:Host`, `Puerto`, `Ruta` | `WEB` |
+| Móvil | Login → **⚙ Servidor SOAP (IIS)** → IP y puerto → **Guardar** (queda en el teléfono; **Restablecer** vuelve al valor por defecto) | `appsettings.json` incrustado (`EmbeddedResource`) | `MOVIL` (`ESCRITORIO` si corre en Windows) |
+
+## Presentación de los clientes (estilo Monsters Inc.)
+
+Solo cambian las pantallas: los datos y las reglas siguen viniendo del servidor y la estructura `modelo / servicio / controlador / vista` es la misma.
+
+| Mejora | Consola | Escritorio | Web | Móvil |
+|---|:-:|:-:|:-:|:-:|
+| Título **MONSTER** y **EUREKA BANK** | letras de bloque | marca en el menú | marca en el menú | login y menú |
+| Pantalla de bienvenida con Sulley y Boo | — | ✔ | (login con foto) | ✔ |
+| Intentos de login con 3 caritas 👾 (según "Intentos restantes" del servidor) | ■ ■ □ | ✔ | ✔ | ✔ |
+| Indicador **Servidor activo / Sin respuesta** y minutos de sesión (token de 30 min) | barra en el encabezado + opción 5 | barra de estado | arriba a la derecha | menú y login |
+| Cuenta como **tarjeta bancaria** (0010 0001, titular, saldo) | — | ✔ | ✔ | ✔ |
+| **Gráficos**: total por tipo y evolución del saldo | — | ✔ | ✔ | ✔ |
+| **Comprobante** después de cada operación (N.º de movimiento, sello APROBADO) | marco doble | ventana + Imprimir/PDF | ventana + Imprimir/PDF | ventana + Compartir |
+| "Enviando…" mientras responde el servidor | spinner ⠹ | cursor de espera | — | indicador |
+| Modo oscuro | — | — | ✔ (se recuerda) | ✔ (se recuerda) |
+
+El número de movimiento del comprobante y el titular se piden al servidor con `consultarCuenta` justo después de la operación (el movimiento recién grabado es el último de la cuenta).
 
 ## Paso 6 — Trabajo en red
 

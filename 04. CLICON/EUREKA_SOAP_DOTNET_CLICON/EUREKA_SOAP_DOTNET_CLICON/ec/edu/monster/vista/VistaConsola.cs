@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using ec.edu.monster.controlador;
 using ec.edu.monster.modelo;
 using ec.edu.monster.servicio;
@@ -17,13 +20,30 @@ namespace ec.edu.monster.vista
     {
         private const int Ancho = 76;
 
+        // Título en letras grandes: MONSTER y EUREKA BANK en bloques, como la consola del TI.1.2.
+        private static readonly string[] TituloMonster =
+        {
+            "███╗   ███╗ ██████╗ ███╗   ██╗███████╗████████╗███████╗██████╗ ",
+            "████╗ ████║██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗",
+            "██╔████╔██║██║   ██║██╔██╗ ██║███████╗   ██║   █████╗  ██████╔╝",
+            "██║╚██╔╝██║██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══╝  ██╔══██╗",
+            "██║ ╚═╝ ██║╚██████╔╝██║ ╚████║███████║   ██║   ███████╗██║  ██║",
+            "╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝",
+        };
+
+        private static readonly string[] TituloEureka =
+        {
+            "█▀▀ █ █ █▀█ █▀▀ █▄▀ ▄▀█    █▄▄ ▄▀█ █▄ █ █▄▀",
+            "██▄ █▄█ █▀▄ ██▄ █ █ █▀█    █▄█ █▀█ █ ▀█ █ █",
+        };
+
         private readonly ControladorConsola _controlador = new ControladorConsola();
 
         public VistaConsola()
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
-            Console.Title = "EurekaBank - SOAP .NET";
+            Console.Title = "MONSTER · EurekaBank - SOAP .NET";
         }
 
         // ================= Flujo de pantallas =================
@@ -45,11 +65,16 @@ namespace ec.edu.monster.vista
             {
                 MostrarEncabezado("INICIO DE SESIÓN");
                 MostrarServidor(_controlador.UrlServidor);
-                string usuario = PedirTexto("Usuario");
+                string usuario = PedirTexto("Usuario (o S para cambiar el servidor)");
+                if (usuario.Trim().Equals("S", StringComparison.OrdinalIgnoreCase))
+                {
+                    PantallaCambiarServidor();
+                    continue;
+                }
                 string clave = PedirClave("Clave");
                 try
                 {
-                    Empleado empleado = _controlador.IniciarSesion(usuario, clave);
+                    Empleado empleado = ConEspera("Verificando credenciales en el servidor", () => _controlador.IniciarSesion(usuario, clave));
                     MostrarExito($"Bienvenido, {empleado.Nombre} (empleado {empleado.Codigo}).");
                     Pausa();
                     return true;
@@ -57,6 +82,7 @@ namespace ec.edu.monster.vista
                 catch (ErrorServicioException ex)
                 {
                     MostrarError(ex.Message);
+                    MostrarIntentos(ex.Message);
                 }
                 if (!PreguntarSiNo("¿Intentar de nuevo?"))
                 {
@@ -67,7 +93,7 @@ namespace ec.edu.monster.vista
 
         private void PantallaMenu()
         {
-            var opciones = new List<string> { "Consultar cuenta y movimientos", "Depósito", "Retiro", "Transferencia" };
+            var opciones = new List<string> { "Consultar cuenta y movimientos", "Depósito", "Retiro", "Transferencia", "Estado del servidor" };
             while (true)
             {
                 MostrarEncabezado($"MENÚ PRINCIPAL · {_controlador.Empleado.Nombre}");
@@ -78,6 +104,7 @@ namespace ec.edu.monster.vista
                     case 2: PantallaOperacion(TipoOperacion.Deposito); break;
                     case 3: PantallaOperacion(TipoOperacion.Retiro); break;
                     case 4: PantallaOperacion(TipoOperacion.Transferencia); break;
+                    case 5: PantallaEstado(); break;
                 }
             }
         }
@@ -90,8 +117,10 @@ namespace ec.edu.monster.vista
                 string cuenta = PedirCuenta("Número de cuenta");
                 try
                 {
-                    MostrarCuenta(_controlador.ConsultarCuenta(cuenta));
-                    MostrarMovimientos(_controlador.TraerMovimientos(cuenta));
+                    Cuenta datos = ConEspera("Consultando la cuenta", () => _controlador.ConsultarCuenta(cuenta));
+                    Movimiento[] movimientos = ConEspera("Trayendo movimientos", () => _controlador.TraerMovimientos(cuenta));
+                    MostrarCuenta(datos);
+                    MostrarMovimientos(movimientos);
                 }
                 catch (ErrorServicioException ex)
                 {
@@ -117,10 +146,11 @@ namespace ec.edu.monster.vista
                 }
                 try
                 {
-                    decimal saldo = tipo == TipoOperacion.Deposito ? _controlador.RegistrarDeposito(cuenta, importe)
-                                  : tipo == TipoOperacion.Retiro ? _controlador.RegistrarRetiro(cuenta, importe)
-                                  : _controlador.RegistrarTransferencia(cuenta, destino, importe);
-                    MostrarOperacionExitosa(tipo, cuenta, destino, importe, saldo);
+                    decimal saldo = ConEspera("Enviando al servidor SOAP", () =>
+                          tipo == TipoOperacion.Deposito ? _controlador.RegistrarDeposito(cuenta, importe)
+                        : tipo == TipoOperacion.Retiro ? _controlador.RegistrarRetiro(cuenta, importe)
+                        : _controlador.RegistrarTransferencia(cuenta, destino, importe));
+                    MostrarComprobante(tipo, cuenta, destino, importe, saldo);
                 }
                 catch (ErrorServicioException ex)
                 {
@@ -130,7 +160,116 @@ namespace ec.edu.monster.vista
             while (PreguntarSiNo("¿Realizar otra operación de este tipo?"));
         }
 
+        /// <summary>La IP del servidor varía según la red: aquí se cambia host y puerto (se guardan en el .exe.config).</summary>
+        private void PantallaCambiarServidor()
+        {
+            MostrarEncabezado("CAMBIAR SERVIDOR");
+            Console.WriteLine("  Actual: " + _controlador.UrlServidor);
+            Console.WriteLine();
+            string host = PedirTexto($"IP o nombre del servidor [{_controlador.HostServidor}]").Trim();
+            string puerto = PedirTexto($"Puerto [{_controlador.PuertoServidor}]").Trim();
+            try
+            {
+                _controlador.CambiarServidor(host.Length == 0 ? _controlador.HostServidor : host,
+                                             puerto.Length == 0 ? _controlador.PuertoServidor : puerto);
+                _servidorActivo = null; // se vuelve a comprobar en el encabezado
+                MostrarExito("Servidor cambiado a " + _controlador.UrlServidor);
+            }
+            catch (InvalidOperationException ex)
+            {
+                MostrarError(ex.Message);
+            }
+            catch (System.Configuration.ConfigurationErrorsException ex)
+            {
+                MostrarError("No se pudo guardar en el .exe.config: " + ex.Message);
+            }
+            Pausa();
+        }
+
+        /// <summary>Opción 5: ¿responde el servidor?, cuánto tarda y cuánto le queda a la sesión.</summary>
+        private void PantallaEstado()
+        {
+            MostrarEncabezado("ESTADO DEL SERVIDOR");
+            var reloj = Stopwatch.StartNew();
+            bool activo = ConEspera("Comprobando el servidor", () => _controlador.ServidorActivo());
+            reloj.Stop();
+            _servidorActivo = activo;
+            _ultimaComprobacion = DateTime.Now;
+            Console.ForegroundColor = activo ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.WriteLine(activo ? "  ■ Servidor activo" : "  ■ Sin respuesta del servidor");
+            Console.ResetColor();
+            Console.WriteLine("    URL           : " + _controlador.UrlServidor);
+            Console.WriteLine("    Respuesta     : " + (activo ? reloj.ElapsedMilliseconds + " ms" : "—"));
+            Console.WriteLine("    Sesión        : " + (_controlador.MinutosSesion == null ? "—" : $"vence en {_controlador.MinutosSesion} min (token de 30 min)"));
+            Console.WriteLine("    Este cliente  : X-Cliente: CONSOLA");
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("    En el panel del servidor (http://IP:8087/) las peticiones de esta consola salen como CONSOLA.");
+            Console.ResetColor();
+            Pausa();
+        }
+
         // ================= Entrada y salida =================
+
+        // El estado del servidor se vuelve a comprobar como mucho cada 10 s (cada pantalla dibuja el encabezado).
+        private bool? _servidorActivo;
+        private DateTime _ultimaComprobacion = DateTime.MinValue;
+
+        private bool ServidorActivo()
+        {
+            if (_servidorActivo == null || (DateTime.Now - _ultimaComprobacion).TotalSeconds > 10)
+            {
+                _servidorActivo = _controlador.ServidorActivo();
+                _ultimaComprobacion = DateTime.Now;
+            }
+            return _servidorActivo.Value;
+        }
+
+        /// <summary>
+        /// Ejecuta la llamada al servidor mostrando un spinner ("⠋ Enviando…") mientras espera.
+        /// Con la salida redirigida (pruebas) llama directo, sin animación.
+        /// </summary>
+        private static T ConEspera<T>(string texto, Func<T> llamada)
+        {
+            if (Console.IsOutputRedirected)
+            {
+                return llamada();
+            }
+            Task<T> tarea = Task.Run(llamada);
+            string[] cuadros = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
+            int i = 0;
+            Console.CursorVisible = false;
+            while (!tarea.Wait(90))
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Write("\r  " + cuadros[i++ % cuadros.Length] + " ");
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.Write(texto + "...");
+            }
+            Console.Write("\r" + new string(' ', texto.Length + 10) + "\r");
+            Console.ResetColor();
+            Console.CursorVisible = true;
+            return tarea.GetAwaiter().GetResult(); // relanza ErrorServicioException tal cual
+        }
+
+        /// <summary>Caritas de intentos según el mensaje del servidor ("Intentos restantes: N"); quien cuenta es el servidor.</summary>
+        private static void MostrarIntentos(string mensaje)
+        {
+            Match m = Regex.Match(mensaje ?? string.Empty, @"Intentos restantes:\s*(\d+)");
+            if (!m.Success && (mensaje ?? string.Empty).IndexOf("bloquead", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return;
+            }
+            int restantes = m.Success ? int.Parse(m.Groups[1].Value) : 0;
+            Console.Write("  Intentos: ");
+            for (int i = 0; i < 3; i++)
+            {
+                Console.ForegroundColor = i < restantes ? ConsoleColor.Green : ConsoleColor.DarkGray;
+                Console.Write(i < restantes ? "■ " : "□ ");
+            }
+            Console.ResetColor();
+            Console.WriteLine();
+        }
 
         public void MostrarEncabezado(string subtitulo)
         {
@@ -138,11 +277,23 @@ namespace ec.edu.monster.vista
             {
                 Console.Clear();
             }
+            Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(new string('═', Ancho));
-            Console.WriteLine(Centrar("EUREKABANK · SOAP .NET + SQL SERVER"));
-            Console.WriteLine(Centrar("ESPE · Arquitectura de Software"));
-            Console.WriteLine(new string('═', Ancho));
+            foreach (string linea in TituloMonster)
+            {
+                Console.WriteLine(Centrar(linea).TrimEnd());
+            }
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            foreach (string linea in TituloEureka)
+            {
+                Console.WriteLine(Centrar(linea).TrimEnd());
+            }
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine(" ╔" + new string('═', Ancho - 2) + "╗");
+            Console.WriteLine(" ║" + Centrar("SOAP .NET + SQL SERVER · ESPE · ARQUITECTURA DE SOFTWARE", Ancho - 2) + "║");
+            LineaEstado();
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine(" ╚" + new string('═', Ancho - 2) + "╝");
             Console.ResetColor();
             if (!string.IsNullOrEmpty(subtitulo))
             {
@@ -152,6 +303,37 @@ namespace ec.edu.monster.vista
                 Console.ResetColor();
             }
             Console.WriteLine();
+        }
+
+        /// <summary>Línea del recuadro: ■ Servidor activo host   Empleado   sesión: N min.</summary>
+        private void LineaEstado()
+        {
+            bool activo = ServidorActivo();
+            string host = Uri.TryCreate(_controlador.UrlServidor, UriKind.Absolute, out Uri u) ? u.Authority : _controlador.UrlServidor;
+            string estado = (activo ? "Servidor activo " : "Sin respuesta ") + host;
+            string empleado = _controlador.Empleado == null ? "" : $"   {_controlador.Empleado.Nombre} ({_controlador.Empleado.Codigo})";
+            string sesion = _controlador.MinutosSesion == null ? "" : $"   sesión: {_controlador.MinutosSesion} min";
+            // La línea mide lo mismo que el marco: " ║ ■ " + texto + relleno + " ║" = Ancho + 1.
+            int espacio = Ancho - 6;
+            if (estado.Length + empleado.Length + sesion.Length > espacio)
+            {
+                estado = activo ? "Servidor activo" : "Sin respuesta"; // sin el host si no alcanza
+            }
+            int relleno = Math.Max(0, espacio - estado.Length - empleado.Length - sesion.Length);
+
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write(" ║ ");
+            Console.ForegroundColor = activo ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.Write("■ ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(estado);
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(empleado);
+            Console.ForegroundColor = _controlador.MinutosSesion <= 5 ? ConsoleColor.Red : ConsoleColor.DarkGray;
+            Console.Write(sesion);
+            Console.Write(new string(' ', relleno));
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine(" ║");
         }
 
         public void MostrarServidor(string url)
@@ -297,20 +479,60 @@ namespace ec.edu.monster.vista
         /// <summary>La acción (INGRESO o SALIDA) viene del servidor, de la tabla TipoMovimiento.</summary>
         private static bool EsIngreso(Movimiento m) => m.Accion == "INGRESO";
 
-        public void MostrarOperacionExitosa(TipoOperacion tipo, string cuenta, string destino, decimal importe, decimal saldo)
+        /// <summary>
+        /// Comprobante en un marco doble. El número de movimiento y el titular se piden al servidor (consultarCuenta):
+        /// el movimiento recién grabado es el último de la cuenta. Si esa consulta falla, sale sin ellos.
+        /// </summary>
+        public void MostrarComprobante(TipoOperacion tipo, string cuenta, string destino, decimal importe, decimal saldo)
         {
+            Cuenta datos = null;
+            try
+            {
+                datos = ConEspera("Preparando comprobante", () => _controlador.ConsultarCuenta(cuenta));
+            }
+            catch (ErrorServicioException)
+            {
+            }
+
+            const int ancho = 58;
+            string registrado = tipo == TipoOperacion.Transferencia ? "REGISTRADA" : "REGISTRADO";
+            string titulo = " COMPROBANTE ";
+            int izquierda = (ancho - 2 - titulo.Length) / 2;
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("  ┌" + new string('─', Ancho - 4) + "┐");
-            string registrado = tipo == TipoOperacion.Transferencia ? "registrada" : "registrado";
-            Console.WriteLine("  │" + Centrar($"{Titulo(tipo)} {registrado} correctamente", Ancho - 4) + "│");
-            string detalle = tipo == TipoOperacion.Transferencia
-                ? $"{Dinero(importe)} de {cuenta} a {destino}"
-                : $"{Dinero(importe)} en la cuenta {cuenta}";
-            Console.WriteLine("  │" + Centrar(detalle, Ancho - 4) + "│");
-            Console.WriteLine("  │" + Centrar($"Nuevo saldo de {cuenta}: {Dinero(saldo)}", Ancho - 4) + "│");
-            Console.WriteLine("  └" + new string('─', Ancho - 4) + "┘");
+            Console.WriteLine("   ╔" + new string('═', izquierda) + titulo + new string('═', ancho - 2 - izquierda - titulo.Length) + "╗");
+            FilaComprobante($"✔ {Titulo(tipo).ToUpperInvariant()} {registrado}", DateTime.Now.ToString("dd/MM/yyyy HH:mm"), ConsoleColor.White, ancho);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("   ╟" + new string('─', ancho - 2) + "╢");
+            if (datos != null)
+            {
+                FilaComprobante("Movimiento   " + datos.NumeroMovimientos, "", ConsoleColor.Gray, ancho);
+            }
+            string titular = datos != null ? " · " + datos.Cliente : "";
+            FilaComprobante("Cuenta       " + Recortar(cuenta.Substring(0, Math.Min(4, cuenta.Length)) + " " + (cuenta.Length > 4 ? cuenta.Substring(4) : "") + titular, ancho - 18), "", ConsoleColor.Gray, ancho);
+            if (destino != null)
+            {
+                FilaComprobante("Destino      " + destino, "", ConsoleColor.Gray, ancho);
+            }
+            FilaComprobante("Importe      " + (tipo == TipoOperacion.Deposito ? "+" : "−") + Dinero(importe), "", tipo == TipoOperacion.Deposito ? ConsoleColor.Green : ConsoleColor.Red, ancho);
+            FilaComprobante("Nuevo saldo  " + Dinero(saldo), "", ConsoleColor.Yellow, ancho);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("   ╚" + new string('═', ancho - 2) + "╝");
             Console.ResetColor();
+        }
+
+        private static void FilaComprobante(string izquierda, string derecha, ConsoleColor color, int ancho)
+        {
+            int espacio = ancho - 4;
+            string texto = izquierda.Length + derecha.Length >= espacio
+                ? Recortar(izquierda, espacio - derecha.Length - 1) + " " + derecha
+                : izquierda + new string(' ', espacio - izquierda.Length - derecha.Length) + derecha;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("   ║ ");
+            Console.ForegroundColor = color;
+            Console.Write(texto);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(" ║");
         }
 
         public void MostrarExito(string mensaje)

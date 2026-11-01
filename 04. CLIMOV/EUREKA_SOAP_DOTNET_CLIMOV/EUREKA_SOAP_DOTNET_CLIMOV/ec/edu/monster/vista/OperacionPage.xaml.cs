@@ -72,6 +72,7 @@ public partial class OperacionPage : ContentPage
             LblResultado.Text = $"{Title} registrad{(destino != null ? "a" : "o")}";
             LblDetalle.Text = $"Importe: {Formato.Dinero(importe.Value)}\nNuevo saldo de {cuenta}: {Formato.Dinero(saldo)}";
             TxtImporte.Text = "";
+            await MostrarComprobanteAsync(cuenta, destino, importe.Value, saldo);
         }
         catch (ErrorServicioException ex)
         {
@@ -81,6 +82,24 @@ public partial class OperacionPage : ContentPage
         {
             Ocupado(false);
         }
+    }
+
+    /// <summary>
+    /// Recibo de la operación. El número de movimiento y el titular se piden al servidor (consultarCuenta):
+    /// el movimiento recién grabado es el último de la cuenta. Si esa consulta falla, el recibo sale sin ellos.
+    /// </summary>
+    private async Task MostrarComprobanteAsync(string cuenta, string? destino, decimal importe, decimal saldo)
+    {
+        Cuenta? datos = null;
+        try
+        {
+            datos = await _controlador.ConsultarCuentaAsync(cuenta);
+        }
+        catch (ErrorServicioException)
+        {
+        }
+        string empleado = $"{_controlador.Empleado?.Codigo} · {_controlador.Empleado?.Nombre}";
+        await Navigation.PushModalAsync(new ComprobantePage(_tipo, cuenta, destino, datos, datos?.NumeroMovimientos ?? 0, importe, saldo, empleado));
     }
 
     private void MostrarError(string mensaje)

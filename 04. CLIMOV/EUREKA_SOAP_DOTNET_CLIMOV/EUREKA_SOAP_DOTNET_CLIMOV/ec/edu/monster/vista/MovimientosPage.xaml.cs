@@ -9,10 +9,12 @@ namespace ec.edu.monster.vista;
 public partial class MovimientosPage : ContentPage
 {
     private readonly ControladorEureka _controlador = ControladorEureka.Instancia;
+    private readonly GraficoCuenta _grafico = new();
 
     public MovimientosPage()
     {
         InitializeComponent();
+        Grafico.Drawable = _grafico;
     }
 
     private async void OnConsultarClicked(object? sender, EventArgs e)
@@ -24,15 +26,22 @@ public partial class MovimientosPage : ContentPage
         {
             Cuenta datos = await _controlador.ConsultarCuentaAsync(cuenta);
             Movimiento[] movimientos = await _controlador.TraerMovimientosAsync(cuenta);
-            LblCliente.Text = $"{datos.Codigo} · {datos.Cliente}";
-            LblDetalle.Text = $"{datos.Moneda} · Sucursal {datos.Sucursal} · {datos.Estado}";
-            LblSaldo.Text = Formato.Dinero(datos.Saldo);
+            LblTipoCuenta.Text = "AHORROS · " + datos.Moneda.ToUpperInvariant();
+            LblNumero.Text = Formato.NumeroTarjeta(datos.Codigo);
+            LblCliente.Text = datos.Cliente.ToUpperInvariant();
+            LblDetalle.Text = $"{datos.Sucursal} · {datos.Estado}";
+            LblSaldo.Text = Formato.Simbolo(datos.Moneda) + " " + Formato.Dinero(datos.Saldo);
+            TarjetaCuenta.Opacity = datos.Estado == "ACTIVO" ? 1 : 0.6;
             TarjetaCuenta.IsVisible = true;
+            _grafico.Mostrar(datos, movimientos);
+            CajaGrafico.IsVisible = movimientos.Length > 0;
+            Grafico.Invalidate();
             MostrarMovimientos(movimientos);
         }
         catch (ErrorServicioException ex)
         {
             TarjetaCuenta.IsVisible = false;
+            CajaGrafico.IsVisible = false;
             LblTituloLista.IsVisible = false;
             ListaMovimientos.Children.Clear();
             MostrarError(ex.Message);
@@ -52,9 +61,9 @@ public partial class MovimientosPage : ContentPage
         {
             var fila = new Grid { ColumnDefinitions = new ColumnDefinitionCollection(new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)) };
             var izquierda = new VerticalStackLayout { Spacing = 2 };
-            izquierda.Children.Add(new Label { Text = $"#{m.Numero}  {m.Tipo}", FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#212529") });
+            izquierda.Children.Add(new Label { Text = $"#{m.Numero}  {m.Tipo}", FontAttributes = FontAttributes.Bold, TextColor = Tema.Recurso("Texto") });
             string referencia = string.IsNullOrEmpty(m.CuentaReferencia) ? "" : $" · ref. {m.CuentaReferencia}";
-            izquierda.Children.Add(new Label { Text = $"{m.Fecha:dd/MM/yyyy HH:mm} · emp. {m.Empleado}{referencia}", FontSize = 12, TextColor = Color.FromArgb("#6C757D") });
+            izquierda.Children.Add(new Label { Text = $"{m.Fecha:dd/MM/yyyy HH:mm} · emp. {m.Empleado}{referencia}", FontSize = 12, TextColor = Tema.Recurso("TextoSuave") });
             var importe = new Label
             {
                 Text = (Formato.EsIngreso(m) ? "+" : "−") + Formato.Dinero(m.Importe),
@@ -69,14 +78,14 @@ public partial class MovimientosPage : ContentPage
             {
                 Content = fila,
                 Padding = new Thickness(14, 10),
-                BackgroundColor = Colors.White,
+                BackgroundColor = Tema.Recurso("Tarjeta"),
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = 10 }
             });
         }
         if (movimientos.Length == 0)
         {
-            ListaMovimientos.Children.Add(new Label { Text = "La cuenta no tiene movimientos.", TextColor = Color.FromArgb("#6C757D") });
+            ListaMovimientos.Children.Add(new Label { Text = "La cuenta no tiene movimientos.", TextColor = Tema.Recurso("TextoSuave") });
         }
     }
 

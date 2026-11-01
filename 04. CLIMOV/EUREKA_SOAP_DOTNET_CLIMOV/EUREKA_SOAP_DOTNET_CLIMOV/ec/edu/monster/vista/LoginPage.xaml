@@ -3,55 +3,94 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ec.edu.monster.vista.LoginPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Fondo}">
+             BackgroundColor="{DynamicResource Fondo}">
 
     <ScrollView>
         <VerticalStackLayout>
 
-            <!-- Encabezado -->
-            <VerticalStackLayout BackgroundColor="{StaticResource Primary}" Padding="24,48,24,32" Spacing="6">
-                <Label Text="$ EurekaBank" FontSize="30" FontAttributes="Bold" TextColor="White" />
-                <Label Text="SOAP .NET + SQL Server" FontSize="16" TextColor="#D6E6F5" />
-                <Label Text="Movimientos · Depósito · Retiro · Transferencia" FontSize="13" TextColor="#A9C8E8" />
-            </VerticalStackLayout>
-
-            <!-- Imagen -->
-            <Image Source="monster.jpg" Aspect="AspectFill" HeightRequest="260" Margin="0,0,0,0" />
+            <!-- Foto con la marca encima -->
+            <Grid HeightRequest="300">
+                <Image Source="monster.jpg" Aspect="AspectFill" />
+                <BoxView>
+                    <BoxView.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#00000000" Offset="0.45" />
+                            <GradientStop Color="#C8000000" Offset="1" />
+                        </LinearGradientBrush>
+                    </BoxView.Background>
+                </BoxView>
+                <VerticalStackLayout VerticalOptions="End" Padding="22,0,22,40" Spacing="2">
+                    <Label Text="M O N S T E R" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource Mike}" />
+                    <Label Text="$ EurekaBank" FontSize="30" FontAttributes="Bold" TextColor="White" />
+                    <Label Text="SOAP .NET + SQL Server · ESPE" FontSize="13" TextColor="#D6E6F5" />
+                </VerticalStackLayout>
+            </Grid>
 
             <!-- Formulario -->
-            <Border Margin="16,-24,16,16" Padding="20" BackgroundColor="White"
-                    StrokeThickness="0" StrokeShape="RoundRectangle 14">
+            <Border Margin="16,-24,16,16" Padding="20" BackgroundColor="{DynamicResource Tarjeta}"
+                    StrokeThickness="0" StrokeShape="RoundRectangle 16">
                 <Border.Shadow>
-                    <Shadow Brush="Black" Opacity="0.12" Radius="12" Offset="0,4" />
+                    <Shadow Brush="Black" Opacity="0.15" Radius="14" Offset="0,4" />
                 </Border.Shadow>
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Iniciar sesión" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+                    <Label Text="Iniciar sesión" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
 
-                    <Label Text="Usuario" FontAttributes="Bold" TextColor="{StaticResource Texto}" Margin="0,6,0,0" />
-                    <Entry x:Name="TxtUsuario" Placeholder="monster" ReturnType="Next" />
+                    <Label Text="Usuario" FontAttributes="Bold" TextColor="{DynamicResource Texto}" Margin="0,6,0,0" />
+                    <Entry x:Name="TxtUsuario" Placeholder="monster" ReturnType="Next" TextColor="{DynamicResource Texto}" />
 
-                    <Label Text="Clave" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
+                    <Label Text="Clave" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
                     <Entry x:Name="TxtClave" IsPassword="True" Placeholder="••••••" ReturnType="Go"
-                           Completed="OnIngresarClicked" />
+                           TextColor="{DynamicResource Texto}" Completed="OnIngresarClicked" />
 
-                    <Label x:Name="LblError" IsVisible="False" TextColor="{StaticResource Error}" FontSize="14" />
+                    <Border x:Name="CajaError" IsVisible="False" BackgroundColor="#FDECEA" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 8" Padding="12,8">
+                        <Label x:Name="LblError" TextColor="#A12622" FontSize="14" FontAttributes="Bold" />
+                    </Border>
+
+                    <!-- Intentos (3 caritas que se apagan según el mensaje del servidor) y estado del servidor -->
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="6">
+                        <Label Text="Intentos:" FontSize="13" TextColor="{DynamicResource TextoSuave}" VerticalOptions="Center" />
+                        <Border x:Name="Carita1" Grid.Column="1" WidthRequest="32" HeightRequest="32" StrokeThickness="2" StrokeShape="Ellipse">
+                            <Label Text="👾" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Border x:Name="Carita2" Grid.Column="2" WidthRequest="32" HeightRequest="32" StrokeThickness="2" StrokeShape="Ellipse">
+                            <Label Text="👾" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Border x:Name="Carita3" Grid.Column="3" WidthRequest="32" HeightRequest="32" StrokeThickness="2" StrokeShape="Ellipse">
+                            <Label Text="👾" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Border x:Name="Indicador" Grid.Column="4" HorizontalOptions="End" Padding="10,5" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14" BackgroundColor="#F1F3F5" Stroke="#DEE2E6">
+                            <HorizontalStackLayout Spacing="6">
+                                <Ellipse x:Name="PuntoServidor" WidthRequest="9" HeightRequest="9" Fill="#6C757D" VerticalOptions="Center" />
+                                <Label x:Name="LblServidorEstado" Text="Comprobando…" FontSize="12" FontAttributes="Bold" TextColor="#6C757D" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </Grid>
 
                     <Button x:Name="BtnIngresar" Text="INGRESAR" Clicked="OnIngresarClicked"
-                            BackgroundColor="{StaticResource Primary}" TextColor="White"
+                            BackgroundColor="#0B4F8A" TextColor="White" CornerRadius="10"
                             FontAttributes="Bold" HeightRequest="50" Margin="0,6,0,0" />
-                    <ActivityIndicator x:Name="Cargando" IsRunning="False" IsVisible="False"
-                                       Color="{StaticResource Primary}" />
+                    <ActivityIndicator x:Name="Cargando" IsRunning="False" IsVisible="False" Color="#0B4F8A" />
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Configuración del servidor -->
-            <Border Margin="16,0,16,24" Padding="20" BackgroundColor="White"
+            <!-- Cambiar servidor: la IP de la PC con IIS varía según la red -->
+            <Border Margin="16,0,16,24" Padding="20" BackgroundColor="{DynamicResource Tarjeta}"
                     StrokeThickness="0" StrokeShape="RoundRectangle 14">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="Servidor SOAP" FontAttributes="Bold" TextColor="{StaticResource Texto}" />
-                    <Entry x:Name="TxtUrl" Keyboard="Url" FontSize="14" />
-                    <Label FontSize="12" TextColor="{StaticResource TextoSuave}"
-                           Text="Viene de appsettings.json (se recompila al cambiar la IP). Celular real: http://IP-DE-LA-PC:8087/WSEureka.svc (misma red WiFi). Emulador: http://10.0.2.2:8087/WSEureka.svc" />
+                    <Label Text="⚙ Servidor SOAP (IIS)" FontAttributes="Bold" TextColor="{DynamicResource Texto}" />
+                    <Grid ColumnDefinitions="*,90" ColumnSpacing="8">
+                        <Entry x:Name="TxtHost" Placeholder="IP de la PC (ej.: 192.168.100.2)" Keyboard="Url" FontSize="14" TextColor="{DynamicResource Texto}" />
+                        <Entry x:Name="TxtPuerto" Grid.Column="1" Placeholder="8087" Keyboard="Numeric" MaxLength="5" FontSize="14" TextColor="{DynamicResource Texto}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="Guardar" Clicked="OnGuardarServidorClicked" BackgroundColor="#29A8E0" TextColor="White" FontAttributes="Bold" CornerRadius="10" />
+                        <Button Grid.Column="1" Text="Restablecer" Clicked="OnRestablecerServidorClicked" BackgroundColor="{DynamicResource Fondo}" TextColor="#0B4F8A" FontAttributes="Bold" CornerRadius="10" />
+                    </Grid>
+                    <Label x:Name="LblUrl" FontSize="12" TextColor="{DynamicResource TextoSuave}" />
+                    <Label FontSize="12" TextColor="{DynamicResource TextoSuave}"
+                           Text="Escriba la IP de la PC donde está el servidor en IIS (ipconfig → IPv4 del Wi-Fi), en la misma red Wi-Fi. Queda guardada en el teléfono; Restablecer vuelve a la de appsettings.json." />
                 </VerticalStackLayout>
             </Border>
 

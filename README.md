@@ -15,7 +15,7 @@ Operaciones: **consultar cuenta y movimientos, depósito, retiro y transferencia
 | **Panel del servidor** | `http://IP-DE-LA-PC:8087/` en IIS (estado, sesiones, peticiones por cliente y prueba rápida) |
 | **Servidor SOAP** | `http://IP-DE-LA-PC:8087/WSEureka.svc` en IIS (WSDL: `?wsdl`) · por defecto `192.168.100.2` |
 | **Página ASMX** | `http://IP-DE-LA-PC:8087/WSEureka.asmx` (las mismas 8 operaciones) |
-| **Cliente web** | `http://IP-DE-LA-PC:5087` |
+| **Cliente web** | `http://IP-DE-LA-PC:5087` en IIS (sitio `EUREKA_WEB`, se publica con `04. CLIWEB\publicar_web_iis.ps1` como administrador) |
 | **IDE** | Visual Studio 2022 Community |
 | **Paquetes** | `ec.edu.monster.db` · `modelo` · `servicio` · `ws` (servidor) y `modelo` · `vista` · `controlador` · `servicio` (clientes) |
 | **Sesión** | Token de 30 minutos en el header SOAP `<Token>`; `cerrarSesion` lo invalida |

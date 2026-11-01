@@ -20,9 +20,10 @@
 
 | Script | Qué hace |
 |---|---|
+| `publicar_web_iis.ps1` | **Como administrador**: publica la web en IIS (sitio `EUREKA_WEB`, puerto 5087, `C:\inetpub\eureka_web`) y abre el 5087 en el firewall. Así queda siempre encendida, como el servidor |
 | `Iniciar-RedLocal.ps1` | Inicia la web en `0.0.0.0:5087` y muestra las URL con las IP de la PC |
 | `Detener-RedLocal.ps1` | Detiene la web iniciada por el script anterior |
-| `Habilitar-Firewall-RedLocal.ps1` | **Como administrador**: abre TCP 8087 (SOAP) y 5087 (web) solo para `LocalSubnet` y perfil Privado |
+| `Habilitar-Firewall-RedLocal.ps1` | **Como administrador**: abre TCP 8087 (SOAP) y 5087 (web) solo para la red local (`LocalSubnet`), en cualquier perfil (la Wi-Fi suele quedar como "Pública") |
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Habilitar-Firewall-RedLocal.ps1   # una vez, como administrador

@@ -45,6 +45,8 @@ public static class ConfiguracionServidor
     public static string ArmarUrl(string host, string puerto, string ruta)
     {
         host = host.Trim();
+        puerto = puerto.Trim();
+        Separar(ref host, ref puerto);
         if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
         {
             throw new InvalidOperationException(
@@ -56,6 +58,30 @@ public static class ConfiguracionServidor
                 $"Puerto del servidor inválido: \"{puerto}\". Debe ser un número entre 1 y 65535 (el servidor usa 8087).");
         }
         return new UriBuilder("http", host, numero, ruta).Uri.ToString();
+    }
+
+    /// <summary>
+    /// En "host" se acepta la IP sola (192.168.100.2), con puerto (192.168.100.2:8087) o la URL completa
+    /// (http://192.168.100.2:8087/WSEureka.svc): de ahí se toman la IP y el puerto.
+    /// </summary>
+    private static void Separar(ref string host, ref string puerto)
+    {
+        if (host.Contains("://"))
+        {
+            if (Uri.TryCreate(host, UriKind.Absolute, out Uri? url))
+            {
+                host = url.Host;
+                puerto = url.Port.ToString();
+            }
+            return;
+        }
+        int dosPuntos = host.LastIndexOf(':');
+        if (dosPuntos > 0 && host.IndexOf(':') == dosPuntos) // "192.168.100.2:8087" (no una IPv6)
+        {
+            puerto = host[(dosPuntos + 1)..].Split('/')[0];
+            host = host[..dosPuntos];
+        }
+        host = host.Split('/')[0];
     }
 
     private static string Texto(JsonElement seccion, string nombre)

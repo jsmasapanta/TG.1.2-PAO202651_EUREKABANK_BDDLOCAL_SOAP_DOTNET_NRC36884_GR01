@@ -117,6 +117,11 @@ namespace ec.edu.monster.vista
             Shown += async (s, e) =>
             {
                 _txtUsuario.Focus();
+                if (_controlador.ErrorConfiguracion != null)
+                {
+                    _lblMensaje.ForeColor = Tema.Error;
+                    _lblMensaje.Text = "✖ " + _controlador.ErrorConfiguracion + " Corríjalo abajo en Servidor.";
+                }
                 bool activo = await _controlador.ServidorActivoAsync();
                 if (!IsDisposed) _indicador.Actualizar(activo, string.Empty); // la URL ya se ve abajo
             };

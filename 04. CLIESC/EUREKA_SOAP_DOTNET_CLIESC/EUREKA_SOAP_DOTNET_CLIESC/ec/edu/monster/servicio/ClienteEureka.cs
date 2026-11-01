@@ -38,12 +38,24 @@ namespace ec.edu.monster.servicio
         private DateTime? _ultimaActividad;
 
         // Constructor privado: solo la propia clase crea la instancia.
+        // Si la configuración no sirve, la aplicación igual abre para que se corrija desde la pantalla.
         private ClienteEureka()
         {
-            Conectar(ConfiguracionServidor.LeerUrl());
+            try
+            {
+                Conectar(ConfiguracionServidor.LeerUrl());
+            }
+            catch (InvalidOperationException ex)
+            {
+                ErrorConfiguracion = ex.Message;
+                UrlServidor = "(servidor sin configurar)";
+            }
         }
 
         public string UrlServidor { get; private set; }
+
+        /// <summary>Motivo por el que la dirección guardada no sirve (null si está bien).</summary>
+        public string ErrorConfiguracion { get; private set; }
 
         /// <summary>
         /// Cambia el servidor desde la pantalla (la IP varía según la red). Valida host y puerto, lo guarda en el
@@ -52,11 +64,16 @@ namespace ec.edu.monster.servicio
         public void CambiarServidor(string host, string puerto)
         {
             string url = ConfiguracionServidor.ArmarUrl(host, puerto); // lanza InvalidOperationException si no es válido
-            ConfiguracionServidor.Guardar(host, puerto);
+            var direccion = new Uri(url);
+            ConfiguracionServidor.Guardar(direccion.Host, direccion.Port.ToString()); // se guarda la IP sola
             _token = null;
             _ultimaActividad = null;
-            try { _fabrica.Close(); } catch { _fabrica.Abort(); }
+            if (_fabrica != null)
+            {
+                try { _fabrica.Close(); } catch { _fabrica.Abort(); }
+            }
             Conectar(url);
+            ErrorConfiguracion = null;
         }
 
         private void Conectar(string url)
@@ -82,6 +99,10 @@ namespace ec.edu.monster.servicio
         /// <summary>true si el servidor responde (pide el WSDL con 3 segundos de espera). Para el indicador "Servidor activo".</summary>
         public bool ServidorActivo()
         {
+            if (_fabrica == null)
+            {
+                return false;
+            }
             try
             {
                 var peticion = (HttpWebRequest)WebRequest.Create(UrlServidor + "?wsdl");
@@ -141,6 +162,10 @@ namespace ec.edu.monster.servicio
 
         private T Invocar<T>(Func<IWSEureka, T> llamada)
         {
+            if (_fabrica == null)
+            {
+                throw new ErrorServicioException(ErrorConfiguracion);
+            }
             IWSEureka canal = _fabrica.CreateChannel();
             var comunicacion = (ICommunicationObject)canal;
             try

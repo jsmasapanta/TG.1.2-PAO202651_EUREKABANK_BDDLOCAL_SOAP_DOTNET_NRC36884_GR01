@@ -78,6 +78,7 @@ public class ClienteEureka : IDisposable
     {
         host = host.Trim();
         puerto = puerto.Trim();
+        Separar(ref host, ref puerto);
         if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
         {
             return $"Host del servidor inválido: \"{host}\". Escriba la IP de la PC del servidor (ejemplo: 192.168.1.10).";
@@ -99,6 +100,30 @@ public class ClienteEureka : IDisposable
         };
         _fabrica = new ChannelFactory<IWSEureka>(binding, new EndpointAddress(UrlServidor));
         return null;
+    }
+
+    /// <summary>
+    /// En "host" se acepta la IP sola (192.168.100.2), con puerto (192.168.100.2:8087) o la URL completa
+    /// (http://192.168.100.2:8087/WSEureka.svc): de ahí se toman la IP y el puerto.
+    /// </summary>
+    private static void Separar(ref string host, ref string puerto)
+    {
+        if (host.Contains("://"))
+        {
+            if (Uri.TryCreate(host, UriKind.Absolute, out Uri? url))
+            {
+                host = url.Host;
+                puerto = url.Port.ToString();
+            }
+            return;
+        }
+        int dosPuntos = host.LastIndexOf(':');
+        if (dosPuntos > 0 && host.IndexOf(':') == dosPuntos) // "192.168.100.2:8087" (no una IPv6)
+        {
+            puerto = host[(dosPuntos + 1)..].Split('/')[0];
+            host = host[..dosPuntos];
+        }
+        host = host.Split('/')[0];
     }
 
     /// <summary>Escribe Host y Puerto en la sección ServidorSoap de appsettings.json (para el próximo arranque).</summary>

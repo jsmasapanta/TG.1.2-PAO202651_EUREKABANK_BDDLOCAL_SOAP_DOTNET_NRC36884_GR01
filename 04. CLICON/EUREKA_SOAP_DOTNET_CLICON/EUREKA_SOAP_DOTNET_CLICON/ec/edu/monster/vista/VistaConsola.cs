@@ -65,6 +65,12 @@ namespace ec.edu.monster.vista
             {
                 MostrarEncabezado("INICIO DE SESIÓN");
                 MostrarServidor(_controlador.UrlServidor);
+                if (_controlador.ErrorConfiguracion != null)
+                {
+                    MostrarError(_controlador.ErrorConfiguracion);
+                    Console.WriteLine("  Escriba S para poner la IP y el puerto del servidor.");
+                    Console.WriteLine();
+                }
                 string usuario = PedirTexto("Usuario (o S para cambiar el servidor)");
                 if (usuario.Trim().Equals("S", StringComparison.OrdinalIgnoreCase))
                 {

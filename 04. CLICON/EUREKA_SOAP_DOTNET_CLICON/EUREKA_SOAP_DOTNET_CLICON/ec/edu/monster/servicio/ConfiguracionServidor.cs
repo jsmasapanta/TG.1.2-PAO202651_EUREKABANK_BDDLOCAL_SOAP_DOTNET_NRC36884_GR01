@@ -17,11 +17,16 @@ namespace ec.edu.monster.servicio
 
         public static string LeerUrl() => ArmarUrl(Host, Puerto);
 
-        /// <summary>Valida host y puerto y devuelve http://host:puerto/WSEureka.svc.</summary>
+        /// <summary>
+        /// Valida host y puerto y devuelve http://host:puerto/WSEureka.svc. En "host" se acepta la IP sola
+        /// (192.168.100.2), con puerto (192.168.100.2:8087) o la URL completa (http://192.168.100.2:8087/WSEureka.svc):
+        /// de ahí se toman la IP y el puerto.
+        /// </summary>
         public static string ArmarUrl(string host, string puerto)
         {
             host = (host ?? string.Empty).Trim();
             puerto = (puerto ?? string.Empty).Trim();
+            Separar(ref host, ref puerto);
             string ruta = (ConfigurationManager.AppSettings["SoapRuta"] ?? "WSEureka.svc").Trim().TrimStart('/');
 
             if (host.Length == 0 || Uri.CheckHostName(host) == UriHostNameType.Unknown)
@@ -36,6 +41,27 @@ namespace ec.edu.monster.servicio
                     "Puerto del servidor inválido: \"" + puerto + "\". Debe ser un número entre 1 y 65535 (el servidor usa 8087).");
             }
             return new UriBuilder("http", host, numero, ruta).Uri.ToString();
+        }
+
+        /// <summary>Si escribieron "IP:puerto" o la URL completa en el host, separa la IP y el puerto.</summary>
+        private static void Separar(ref string host, ref string puerto)
+        {
+            if (host.IndexOf("://", StringComparison.Ordinal) >= 0)
+            {
+                if (Uri.TryCreate(host, UriKind.Absolute, out Uri url))
+                {
+                    host = url.Host;
+                    puerto = url.Port.ToString();
+                }
+                return;
+            }
+            int dosPuntos = host.LastIndexOf(':');
+            if (dosPuntos > 0 && host.IndexOf(':') == dosPuntos) // "192.168.100.2:8087" (no una IPv6)
+            {
+                puerto = host.Substring(dosPuntos + 1).Split('/')[0];
+                host = host.Substring(0, dosPuntos);
+            }
+            host = host.Split('/')[0];
         }
 
         /// <summary>Guarda host y puerto en el .exe.config (appSettings SoapHost y SoapPuerto).</summary>

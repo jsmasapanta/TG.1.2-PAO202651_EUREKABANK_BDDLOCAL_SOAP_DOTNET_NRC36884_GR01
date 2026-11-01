@@ -14,6 +14,9 @@ namespace ec.edu.monster.controlador
 
         public string UrlServidor => _servicio.UrlServidor;
 
+        /// <summary>Motivo por el que la dirección guardada del servidor no sirve (null si está bien).</summary>
+        public string ErrorConfiguracion => _servicio.ErrorConfiguracion;
+
         /// <summary>Host y puerto actuales (para mostrarlos en la pantalla de cambio de servidor).</summary>
         public string HostServidor => System.Uri.TryCreate(UrlServidor, System.UriKind.Absolute, out System.Uri u) ? u.Host : string.Empty;
 

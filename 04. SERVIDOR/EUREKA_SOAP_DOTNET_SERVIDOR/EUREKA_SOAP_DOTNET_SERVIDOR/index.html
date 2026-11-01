@@ -7,71 +7,109 @@
 <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-<header>
-  <img src="monster.jpg" class="monster" alt="Monster">
-  <h1>EUREKA_SOAP_DOTNET_SERVIDOR <small>Servidor SOAP EurekaBank Monster · WCF + SQL Server · Grupo 1 · NRC 36884</small></h1>
-  <div class="estado" id="estado"><span class="punto"></span><span id="txtEstado">Conectando…</span></div>
-</header>
 
-<main>
-  <div class="tarjetas">
-    <div class="tarjeta" style="--c:var(--azul)"><div class="et">Tiempo activo</div><div class="num" id="uptime">--</div><div class="sub" id="inicio">Inicio: --</div></div>
-    <div class="tarjeta" style="--c:var(--verde)"><div class="et">Sesiones activas</div><div class="num" id="sesiones">0</div><div class="sub">Tokens vigentes (30 min)</div></div>
-    <div class="tarjeta" style="--c:var(--cian)"><div class="et">Operaciones bancarias</div><div class="num" id="operaciones">0</div><div class="sub">Depósitos, retiros, transferencias y consultas</div></div>
-    <div class="tarjeta" style="--c:var(--morado)"><div class="et">Peticiones</div><div class="num" id="peticiones">0</div><div class="sub" id="exitosas">—</div></div>
+<!-- ===================== Login del panel ===================== -->
+<section id="vistaLogin" class="vista-login">
+  <div class="login-caja">
+    <div class="login-foto">
+      <img src="monster.jpg" alt="Monster">
+      <div class="login-leyenda"><span>M O N S T E R</span><strong>$ EurekaBank</strong><small>Panel del servidor SOAP · WCF + SQL Server</small></div>
+    </div>
+    <form id="fLogin" class="login-form" autocomplete="off">
+      <h2>Panel de control</h2>
+      <p class="tenue">Inicie sesión con un empleado de la BD (monster / monster69).</p>
+      <label for="usr">Usuario</label>
+      <input id="usr" value="monster" autocomplete="username">
+      <label for="clv">Clave</label>
+      <input id="clv" type="password" autocomplete="current-password" autofocus>
+      <div class="intentos">Intentos:
+        <span class="carita viva">👾</span><span class="carita viva">👾</span><span class="carita viva">👾</span>
+        <span class="estado mini" id="estadoLogin"><span class="punto"></span><span class="txt">Comprobando…</span></span>
+      </div>
+      <div class="error" id="errLogin" hidden></div>
+      <button id="btnLogin">INGRESAR</button>
+    </form>
   </div>
+</section>
 
-  <div class="rejilla">
+<!-- ===================== Panel (después del login) ===================== -->
+<section id="vistaApp" hidden>
+  <header>
+    <img src="monster.jpg" class="monster" alt="Monster">
+    <h1>EUREKA_SOAP_DOTNET_SERVIDOR <small>Servidor SOAP EurekaBank Monster · WCF + SQL Server · Grupo 1 · NRC 36884</small></h1>
+    <div class="estado" id="estado"><span class="punto"></span><span id="txtEstado">Conectando…</span></div>
+    <div class="usuario"><span id="lblUsuario"></span><button id="btnSalir" class="secundario">Cerrar sesión</button></div>
+  </header>
+
+  <nav class="pestanas">
+    <button class="pestana activa" data-pestana="servicio">🔌 Servicio</button>
+    <button class="pestana" data-pestana="monitoreo">📡 Monitoreo</button>
+  </nav>
+
+  <!-- -------- Pestaña Servicio -------- -->
+  <main id="servicio" class="contenido-pestana">
     <section>
-      <h2>📡 Peticiones en tiempo real <span class="chip">se actualiza cada 3 s</span></h2>
-      <ul class="eventos" id="eventos"><li class="vacio">Esperando peticiones de los clientes…</li></ul>
+      <h2>🔌 Operaciones SOAP <span class="chip" id="base"></span></h2>
+      <table>
+        <tr><th>Operación</th><th>Parámetros</th><th>Descripción</th><th>Token</th></tr>
+        <tr><td><code>login</code></td><td>usuario, clave</td><td>Devuelve el empleado y su token. 3 intentos; al tercero bloquea 2 minutos</td><td class="no">No</td></tr>
+        <tr><td><code>cerrarSesion</code></td><td>token</td><td>Invalida el token de la sesión</td><td class="no">Va como parámetro</td></tr>
+        <tr><td><code>consultarCuenta</code></td><td>cuenta</td><td>Cliente, moneda, sucursal, saldo y estado</td><td class="si">Sí</td></tr>
+        <tr><td><code>traerMovimientos</code></td><td>cuenta</td><td>Movimientos de la cuenta, el más reciente primero</td><td class="si">Sí</td></tr>
+        <tr><td><code>registrarDeposito</code></td><td>cuenta, importe, codEmpleado</td><td>Suma al saldo (movimiento 003)</td><td class="si">Sí</td></tr>
+        <tr><td><code>registrarRetiro</code></td><td>cuenta, importe, codEmpleado</td><td>Resta del saldo si alcanza (movimiento 004)</td><td class="si">Sí</td></tr>
+        <tr><td><code>registrarTransferencia</code></td><td>cuentaOrigen, cuentaDestino, importe, codEmpleado</td><td>Entre cuentas de la misma moneda (009 y 008)</td><td class="si">Sí</td></tr>
+        <tr><td><code>obtenerEstado</code></td><td>—</td><td>Métricas del monitoreo (no cuenta como petición)</td><td class="no">No</td></tr>
+      </table>
+      <p class="tenue nota">
+        El token viaja en el header SOAP <code>&lt;Token xmlns="http://espe.edu.ec/eureka/"&gt;…&lt;/Token&gt;</code>; sin él o vencido responde
+        <code>Token inválido o expirado. Inicie sesión.</code> Cada cliente envía el header HTTP <code>X-Cliente</code>.
+      </p>
     </section>
-    <div class="columna">
+
+    <div class="rejilla">
       <section>
-        <h2>📊 Operaciones por tipo</h2>
-        <div id="barras"></div>
-      </section>
-      <section>
-        <h2>👥 Peticiones por cliente <span class="chip">header X-Cliente</span></h2>
-        <div id="clientes"></div>
+        <h2>🔗 Enlaces del servicio</h2>
+        <table class="enlaces">
+          <tr><td>Servicio WCF</td><td><a id="lnkSvc" target="_blank"></a></td></tr>
+          <tr><td>Contrato WSDL</td><td><a id="lnkWsdl" target="_blank"></a></td></tr>
+          <tr><td>Servicio ASMX (operaciones con formulario)</td><td><a id="lnkAsmx" target="_blank"></a></td></tr>
+          <tr><td>Cliente web</td><td><a id="lnkWeb" target="_blank"></a></td></tr>
+        </table>
       </section>
       <section>
         <h2>🧪 Prueba rápida</h2>
-        <form id="fLogin">
-          <div class="dos"><input id="usr" placeholder="Usuario" value="monster" autocomplete="username"><input id="clv" type="password" placeholder="Clave" autocomplete="current-password"></div>
-          <button id="btnLogin">Iniciar sesión</button>
-        </form>
-        <form id="fCuenta" style="margin-top:12px;display:none">
+        <form id="fCuenta">
           <div class="dos"><input id="cta" placeholder="Cuenta" value="00100001" inputmode="numeric"><input id="imp" placeholder="Importe" value="10.00" inputmode="decimal"></div>
-          <div class="dos"><button id="btnConsultar">Consultar cuenta</button><button type="button" id="btnDepositar" class="secundario">Depositar</button></div>
+          <div class="dos"><button>Consultar cuenta</button><button type="button" id="btnDepositar" class="secundario">Depositar</button></div>
         </form>
-        <div class="resultado" id="res">Inicie sesión con el empleado de la BD (monster / monster69).</div>
+        <div class="resultado" id="res">Escriba una cuenta y consulte su saldo o registre un depósito de prueba.</div>
       </section>
     </div>
-  </div>
+  </main>
 
-  <section>
-    <h2>🔌 Operaciones SOAP <span class="chip" id="base"></span></h2>
-    <table>
-      <tr><th>Operación</th><th>Parámetros</th><th>Descripción</th><th>Token</th></tr>
-      <tr><td><code>login</code></td><td>usuario, clave</td><td>Devuelve el empleado y su token. 3 intentos; al tercero bloquea 2 minutos</td><td class="no">No</td></tr>
-      <tr><td><code>cerrarSesion</code></td><td>token</td><td>Invalida el token de la sesión</td><td class="no">Va como parámetro</td></tr>
-      <tr><td><code>consultarCuenta</code></td><td>cuenta</td><td>Cliente, moneda, sucursal, saldo y estado</td><td class="si">Sí</td></tr>
-      <tr><td><code>traerMovimientos</code></td><td>cuenta</td><td>Movimientos de la cuenta, el más reciente primero</td><td class="si">Sí</td></tr>
-      <tr><td><code>registrarDeposito</code></td><td>cuenta, importe, codEmpleado</td><td>Suma al saldo (movimiento 003)</td><td class="si">Sí</td></tr>
-      <tr><td><code>registrarRetiro</code></td><td>cuenta, importe, codEmpleado</td><td>Resta del saldo si alcanza (movimiento 004)</td><td class="si">Sí</td></tr>
-      <tr><td><code>registrarTransferencia</code></td><td>cuentaOrigen, cuentaDestino, importe, codEmpleado</td><td>Entre cuentas de la misma moneda (009 y 008)</td><td class="si">Sí</td></tr>
-      <tr><td><code>obtenerEstado</code></td><td>—</td><td>Métricas de este panel (no cuenta como petición)</td><td class="no">No</td></tr>
-    </table>
-    <p style="color:var(--tenue);font-size:12px;margin-top:12px">
-      El token viaja en el header SOAP <code>&lt;Token xmlns="http://espe.edu.ec/eureka/"&gt;…&lt;/Token&gt;</code>; sin él o vencido responde
-      <code>Token inválido o expirado. Inicie sesión.</code> Cada cliente envía el header HTTP <code>X-Cliente</code>.
-      WSDL: <a id="wsdl" href="WSEureka.svc?wsdl" target="_blank">WSEureka.svc?wsdl</a> ·
-      ASMX: <a href="WSEureka.asmx" target="_blank">WSEureka.asmx</a>
-    </p>
-  </section>
-</main>
-<footer>Arquitectura de Software · ESPE · IIS · WCF (.NET Framework 4.7.2) · SQL Server EUREKABANK</footer>
+  <!-- -------- Pestaña Monitoreo -------- -->
+  <main id="monitoreo" class="contenido-pestana" hidden>
+    <div class="tarjetas">
+      <div class="tarjeta" style="--c:var(--azul)"><div class="et">Tiempo activo</div><div class="num" id="uptime">--</div><div class="sub" id="inicio">Inicio: --</div></div>
+      <div class="tarjeta" style="--c:var(--verde)"><div class="et">Sesiones activas</div><div class="num" id="sesiones">0</div><div class="sub">Tokens vigentes (30 min)</div></div>
+      <div class="tarjeta" style="--c:var(--cian)"><div class="et">Operaciones bancarias</div><div class="num" id="operaciones">0</div><div class="sub">Depósitos, retiros, transferencias y consultas</div></div>
+      <div class="tarjeta" style="--c:var(--morado)"><div class="et">Peticiones</div><div class="num" id="peticiones">0</div><div class="sub" id="exitosas">—</div></div>
+    </div>
+    <div class="rejilla">
+      <section>
+        <h2>📡 Peticiones en tiempo real <span class="chip">se actualiza cada 3 s</span></h2>
+        <ul class="eventos" id="eventos"><li class="vacio">Esperando peticiones de los clientes…</li></ul>
+      </section>
+      <div class="columna">
+        <section><h2>📊 Operaciones por tipo</h2><div id="barras"></div></section>
+        <section><h2>👥 Peticiones por cliente <span class="chip">header X-Cliente</span></h2><div id="clientes"></div></section>
+      </div>
+    </div>
+  </main>
+  <footer>Arquitectura de Software · ESPE · IIS · WCF (.NET Framework 4.7.2) · SQL Server EUREKABANK</footer>
+</section>
+
 <script src="panel.js"></script>
 </body>
 </html>

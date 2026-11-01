@@ -53,3 +53,37 @@ button.secundario{background:var(--panel2);color:var(--texto);border:1px solid v
 footer{text-align:center;color:var(--tenue);font-size:12px;padding:18px}
 @media(max-width:900px){.tarjetas{grid-template-columns:repeat(2,1fr)}.rejilla{grid-template-columns:1fr}}
 @media(max-width:520px){header,main{padding-left:16px;padding-right:16px}.tarjetas{grid-template-columns:1fr}.estado{margin-left:0}.evento{grid-template-columns:62px 1fr}.evento .badge{grid-row:span 1}}
+
+/* ---------- Login del panel ---------- */
+[hidden] { display: none !important; }
+.vista-login { min-height: 100vh; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(600px 360px at 12% 8%, rgba(61,139,253,.35), transparent 70%), radial-gradient(500px 360px at 92% 92%, rgba(167,139,250,.3), transparent 70%), var(--fondo); }
+.login-caja { width: 100%; max-width: 860px; display: grid; grid-template-columns: 1fr 1fr; background: var(--panel); border: 1px solid var(--borde); border-radius: 18px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.login-foto { position: relative; min-height: 440px; }
+.login-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.login-leyenda { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,.8)); }
+.login-leyenda span { color: #7ac943; font-size: 12px; font-weight: 800; letter-spacing: 3px; }
+.login-leyenda strong { display: block; font-size: 26px; }
+.login-leyenda small { color: var(--tenue); }
+.login-form { padding: 34px 32px; display: flex; flex-direction: column; gap: 8px; }
+.login-form h2 { font-size: 24px; } .tenue { color: var(--tenue); font-size: 13px; }
+.login-form label { font-size: 13px; font-weight: 700; margin-top: 8px; }
+.intentos { display: flex; align-items: center; gap: 8px; color: var(--tenue); font-size: 13px; margin-top: 10px; flex-wrap: wrap; }
+.carita { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; }
+.carita.viva { background: #16351f; border: 2px solid #7ac943; }
+.carita.apagada { background: #222; border: 2px solid #444; filter: grayscale(1); opacity: .45; }
+.estado.mini { margin-left: auto; padding: 5px 11px; font-size: 12px; }
+.error { background: #3a1216; color: #fecaca; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 600; }
+.login-form #btnLogin { margin-top: 12px; }
+
+/* ---------- Pestañas ---------- */
+.usuario { display: flex; align-items: center; gap: 10px; color: var(--tenue); font-size: 13px; }
+.usuario button { padding: 8px 12px; }
+.pestanas { max-width: 1280px; margin: 18px auto 0; padding: 0 28px; display: flex; gap: 8px; }
+.pestana { background: var(--panel); color: var(--tenue); border: 1px solid var(--borde); padding: 10px 18px; border-radius: 10px 10px 0 0; }
+.pestana.activa { background: linear-gradient(90deg, var(--azul), var(--cian)); color: #06101f; border-color: transparent; }
+.contenido-pestana { padding-top: 16px; }
+.nota { margin-top: 12px; }
+.enlaces td:first-child { color: var(--tenue); white-space: nowrap; }
+.enlaces a { word-break: break-all; }
+@media (max-width: 760px) { .login-caja { grid-template-columns: 1fr; } .login-foto { min-height: 220px; } .usuario span { display: none; } }

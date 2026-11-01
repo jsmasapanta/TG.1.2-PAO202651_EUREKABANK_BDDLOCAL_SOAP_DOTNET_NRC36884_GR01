@@ -1,5 +1,6 @@
-// Panel del servidor (index.html). Habla con WSEureka.svc por SOAP, como cualquier cliente,
-// con el header X-Cliente: PANEL. obtenerEstado no pide login y no cuenta como petición.
+// Panel del servidor (index.html). Primero pide login (operación SOAP login con un empleado de la BD);
+// después muestra las pestañas Servicio y Monitoreo. Habla con WSEureka.svc por SOAP, como cualquier
+// cliente, con el header X-Cliente: PANEL. obtenerEstado no cuenta como petición.
 const URL_SOAP = new URL("WSEureka.svc", location.href).href;
 const NS = "http://espe.edu.ec/eureka/";
 const OPERACIONES = {
@@ -7,14 +8,15 @@ const OPERACIONES = {
   Consulta: ["Consultas", "var(--cian)"], Movimientos: ["Movimientos", "var(--morado)"]
 };
 const COLOR_CLIENTE = { WEB: "var(--cian)", MOVIL: "var(--verde)", ESCRITORIO: "var(--morado)", CONSOLA: "var(--amarillo)", PANEL: "var(--azul)", OTRO: "#94a3b8" };
-let vistos = new Set(), sesion = null;
+const CLAVE_SESION = "panel_eureka";
+let vistos = new Set(), sesion = null, reloj = null;
 
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c]));
 const dinero = n => Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const hijos = (el, nombre) => el ? Array.from(el.children).filter(e => e.localName === nombre) : [];
 const texto = (el, nombre) => (hijos(el, nombre)[0] || {}).textContent ?? "";
-$("base").textContent = URL_SOAP;
+const conteos = el => hijos(el, "Conteo").map(c => [texto(c, "Nombre"), +texto(c, "Cantidad")]);
 
 /** Envía la operación SOAP y devuelve el elemento <operacionResult>; si hay Fault lanza su <Mensaje>. */
 async function soap(operacion, parametros = {}, token = null) {
@@ -35,6 +37,77 @@ async function soap(operacion, parametros = {}, token = null) {
   return resultado;
 }
 
+// ===================== Login =====================
+
+function pintarIntentos(mensaje) {
+  const m = /Intentos restantes:\s*(\d+)/.exec(mensaje || "");
+  const restantes = m ? +m[1] : /bloquead/i.test(mensaje || "") ? 0 : 3;
+  document.querySelectorAll(".intentos .carita").forEach((c, i) => c.className = "carita " + (i < restantes ? "viva" : "apagada"));
+}
+
+async function comprobarServidor(id) {
+  const el = $(id);
+  try {
+    await soap("obtenerEstado");
+    el.classList.remove("caido"); el.querySelector(".txt, #txtEstado").textContent = "Servicio activo";
+    return true;
+  } catch {
+    el.classList.add("caido"); el.querySelector(".txt, #txtEstado").textContent = "Sin respuesta";
+    return false;
+  }
+}
+
+$("fLogin").onsubmit = async ev => {
+  ev.preventDefault();
+  $("btnLogin").disabled = true; $("errLogin").hidden = true;
+  try {
+    const r = await soap("login", { usuario: $("usr").value, clave: $("clv").value });
+    sesion = { token: texto(r, "Token"), codigo: texto(r, "Codigo"), nombre: texto(r, "Nombre") };
+    try { sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion)); } catch { }
+    $("clv").value = "";
+    pintarIntentos("");
+    mostrarPanel();
+  } catch (err) {
+    $("errLogin").textContent = "✖ " + err.message; $("errLogin").hidden = false;
+    pintarIntentos(err.message);
+  } finally { $("btnLogin").disabled = false; }
+};
+
+$("btnSalir").onclick = async () => {
+  if (sesion) { try { await soap("cerrarSesion", { token: sesion.token }); } catch { } }
+  salir("Sesión cerrada: el token ya no sirve.");
+};
+
+/** Vuelve al login (al cerrar sesión o si el servidor dice que el token venció). */
+function salir(aviso) {
+  sesion = null;
+  try { sessionStorage.removeItem(CLAVE_SESION); } catch { }
+  clearInterval(reloj);
+  $("vistaApp").hidden = true; $("vistaLogin").hidden = false;
+  if (aviso) { $("errLogin").textContent = aviso; $("errLogin").hidden = false; }
+  comprobarServidor("estadoLogin");
+}
+
+// ===================== Panel =====================
+
+function mostrarPanel() {
+  $("vistaLogin").hidden = true; $("vistaApp").hidden = false;
+  $("lblUsuario").textContent = `${sesion.nombre} (${sesion.codigo})`;
+  $("base").textContent = URL_SOAP;
+  const enlace = (id, url) => { $(id).href = url; $(id).textContent = url; };
+  enlace("lnkSvc", URL_SOAP);
+  enlace("lnkWsdl", URL_SOAP + "?wsdl");
+  enlace("lnkAsmx", new URL("WSEureka.asmx", location.href).href);
+  enlace("lnkWeb", `${location.protocol}//${location.hostname}:5087`);
+  refrescar(); clearInterval(reloj); reloj = setInterval(refrescar, 3000);
+}
+
+document.querySelectorAll(".pestana").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".pestana").forEach(x => x.classList.toggle("activa", x === b));
+  document.querySelectorAll(".contenido-pestana").forEach(p => p.hidden = p.id !== b.dataset.pestana);
+  try { sessionStorage.setItem("panel_pestana", b.dataset.pestana); } catch { }
+});
+
 function contar(id, fin) {
   const el = $(id), ini = parseInt(el.textContent) || 0;
   if (ini === fin) return;
@@ -42,8 +115,6 @@ function contar(id, fin) {
   (function paso(t) { const k = Math.min((t - t0) / 600, 1); el.textContent = Math.round(ini + (fin - ini) * k); if (k < 1) requestAnimationFrame(paso); })(t0);
 }
 function duracion(s) { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h} h ${m} min` : m ? `${m} min ${s % 60} s` : `${s} s`; }
-const hora = iso => iso.substring(11, 19);
-const conteos = el => hijos(el, "Conteo").map(c => [texto(c, "Nombre"), +texto(c, "Cantidad")]);
 
 function barras(id, datos, color) {
   const max = Math.max(1, ...datos.map(d => d[1]));
@@ -72,36 +143,25 @@ async function refrescar() {
       $("eventos").innerHTML = eventos.map(ev => {
         const h = texto(ev, "Hora"), cli = texto(ev, "Cliente"), op = texto(ev, "Operacion"), ok = texto(ev, "Exito") === "true";
         const id = h + cli + op, nuevo = !vistos.has(id); vistos.add(id);
-        return `<li class="evento ${ok ? "" : "error"}" style="${nuevo ? "" : "animation:none"}"><span class="hora">${esc(hora(h))}</span>`
+        return `<li class="evento ${ok ? "" : "error"}" style="${nuevo ? "" : "animation:none"}"><span class="hora">${esc(h.substring(11, 19))}</span>`
           + `<span class="badge b-${esc(cli)}">${esc(cli)}</span><span><b>${esc(op)}</b> · ${ok ? "éxito" : "error"}</span></li>`;
       }).join("");
     }
-  } catch (err) {
+  } catch {
     $("estado").classList.add("caido");
     $("txtEstado").textContent = "Sin respuesta";
   }
 }
 
+// ===================== Prueba rápida (pestaña Servicio) =====================
+
 function mostrar(html, ok) { const r = $("res"); r.className = "resultado"; void r.offsetWidth; r.className = "resultado " + (ok ? "ok" : "mal"); r.innerHTML = html; }
 
-$("fLogin").onsubmit = async ev => {
-  ev.preventDefault();
-  try {
-    if (sesion) {
-      await soap("cerrarSesion", { token: sesion.token });
-      sesion = null;
-      $("fCuenta").style.display = "none"; $("btnLogin").textContent = "Iniciar sesión";
-      mostrar("Sesión cerrada: el token ya no sirve.", true);
-    } else {
-      const r = await soap("login", { usuario: $("usr").value, clave: $("clv").value });
-      sesion = { token: texto(r, "Token"), codigo: texto(r, "Codigo") };
-      $("clv").value = "";
-      $("fCuenta").style.display = "grid"; $("btnLogin").textContent = "Cerrar sesión";
-      mostrar(`✅ Bienvenido, <b>${esc(texto(r, "Nombre"))}</b> (empleado ${esc(sesion.codigo)}).`, true);
-    }
-  } catch (err) { mostrar("❌ " + esc(err.message), false); }
-  refrescar();
-};
+/** Si el token venció en el servidor, vuelve al login. */
+function revisarSesion(err) {
+  if (/Token inválido o expirado/i.test(err.message)) { salir(err.message); return true; }
+  mostrar("❌ " + esc(err.message), false); return false;
+}
 
 $("fCuenta").onsubmit = async ev => {
   ev.preventDefault();
@@ -113,8 +173,7 @@ $("fCuenta").onsubmit = async ev => {
       return `<tr><td>${esc(texto(x, "Numero"))}</td><td>${esc(texto(x, "Fecha").substring(0, 10))}</td><td>${esc(texto(x, "Tipo"))}</td><td class="${ing ? "ing" : "sal"}">${ing ? "+" : "−"}${dinero(texto(x, "Importe"))}</td></tr>`; }).join("");
     mostrar(`✅ Cuenta <b>${esc(cuenta)}</b> · ${esc(texto(c, "Cliente"))} (${esc(texto(c, "Estado"))})<br>Saldo: <b style="font-size:20px">${dinero(texto(c, "Saldo"))}</b> ${esc(texto(c, "Moneda"))}`
       + (filas ? `<table class="movs"><tr><th>#</th><th>Fecha</th><th>Tipo</th><th>Importe</th></tr>${filas}</table>` : ""), true);
-  } catch (err) { mostrar("❌ " + esc(err.message), false); }
-  refrescar();
+  } catch (err) { revisarSesion(err); }
 };
 
 $("btnDepositar").onclick = async () => {
@@ -122,8 +181,16 @@ $("btnDepositar").onclick = async () => {
   try {
     const saldo = (await soap("registrarDeposito", { cuenta, importe, codEmpleado: sesion.codigo }, sesion.token)).textContent;
     mostrar(`✅ Depósito de <b>${dinero(importe)}</b> en ${esc(cuenta)}. Nuevo saldo: <b style="font-size:20px">${dinero(saldo)}</b>`, true);
-  } catch (err) { mostrar("❌ " + esc(err.message), false); }
-  refrescar();
+  } catch (err) { revisarSesion(err); }
 };
 
-refrescar(); setInterval(refrescar, 3000);
+// ===================== Inicio =====================
+// Si en esta pestaña del navegador ya había sesión, se reanuda (el servidor dirá si el token sigue vigente).
+try { sesion = JSON.parse(sessionStorage.getItem(CLAVE_SESION) || "null"); } catch { sesion = null; }
+if (sesion) {
+  mostrarPanel();
+  const guardada = (() => { try { return sessionStorage.getItem("panel_pestana"); } catch { return null; } })();
+  if (guardada) document.querySelector(`.pestana[data-pestana="${guardada}"]`)?.click();
+} else {
+  comprobarServidor("estadoLogin");
+}

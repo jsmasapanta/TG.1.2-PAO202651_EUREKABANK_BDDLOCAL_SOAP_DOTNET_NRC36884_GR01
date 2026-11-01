@@ -14,6 +14,7 @@ public partial class OperacionPage : ContentPage
     public OperacionPage(TipoOperacion tipo)
     {
         InitializeComponent();
+        PermitirDecimales();
         _tipo = tipo;
         _color = Formato.ColorDe(tipo);
 
@@ -100,6 +101,24 @@ public partial class OperacionPage : ContentPage
         }
         string empleado = $"{_controlador.Empleado?.Codigo} · {_controlador.Empleado?.Nombre}";
         await Navigation.PushModalAsync(new ComprobantePage(_tipo, cuenta, destino, datos, datos?.NumeroMovimientos ?? 0, importe, saldo, empleado));
+    }
+
+    /// <summary>
+    /// En Android el teclado numérico no deja escribir punto ni coma. Para el importe se pide el teclado
+    /// de números con decimales y se aceptan los dos separadores (75.50 o 75,50); Formato.LeerImporte los convierte.
+    /// </summary>
+    private void PermitirDecimales()
+    {
+#if ANDROID
+        TxtImporte.HandlerChanged += (s, e) =>
+        {
+            if (TxtImporte.Handler?.PlatformView is Android.Widget.EditText campo)
+            {
+                campo.InputType = Android.Text.InputTypes.ClassNumber | Android.Text.InputTypes.NumberFlagDecimal;
+                campo.KeyListener = Android.Text.Method.DigitsKeyListener.GetInstance("0123456789.,");
+            }
+        };
+#endif
     }
 
     private void MostrarError(string mensaje)

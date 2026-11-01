@@ -112,7 +112,8 @@
 
 @section Scripts {
     <script>
-        const operacion = '@Formato.Titulo(Model.Tipo).ToLowerInvariant()';
+        // Json.Serialize arma un texto de JavaScript válido (antes la ó salía como código HTML).
+        const operacion = @Json.Serialize(Formato.Titulo(Model.Tipo).ToLowerInvariant());
         function confirmar() {
             const cuenta = document.getElementById('Cuenta').value.trim();
             const destino = document.getElementById('CuentaDestino');
